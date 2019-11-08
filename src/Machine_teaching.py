@@ -94,7 +94,6 @@ def loss_function():
 
 
 def choice_data_set(w_t, w_, X, y, eta=0.01):
-    global mat
     grad_loss_ = make_grad_loss_matrix(X, y, w_t)
     loss = loss_function()
     loss_t = np.array(loss(X, y, w_t)).flatten()
@@ -104,8 +103,10 @@ def choice_data_set(w_t, w_, X, y, eta=0.01):
     index = choicer(grad_loss_, loss_t, loss__)
     index = np.array(index).flatten()
     index = index[0]
+
     X_t = X.iloc[index]
     y_t = y.iloc[index]
+    print(index)
     return X_t, y_t
 # %%
 
@@ -184,6 +185,7 @@ def predict(X, y, w):
     logit = np.dot(X, w)
     pred_y = T.nnet.sigmoid(logit).eval()
     # pred_y = [1 if i > 0.5 else 0 for i in pred_y]
+    return(roc_auc_score(y, pred_y))
     print(roc_auc_score(y, pred_y))
 # %%
 
@@ -197,13 +199,13 @@ def main():
     y = df['Spe']
 
     train_X, test_X, train_y, test_y = train_test_split(
-        X, y, shuffle=True, random_state=28
+        X, y, shuffle=True, random_state=88
     )
 
-    np.random.seed(seed=28)
+    np.random.seed(seed=88)
     lambd = 0.01
     eta = 0.01
-    training_epochs = 100
+    training_epochs = 10
     w_init = np.random.normal(loc=0.0, scale=lambd, size=train_X.shape[1])
 
     train = model(train_X, train_y, lambd, w_init)
@@ -227,9 +229,21 @@ def main():
         loss, w = student(X_t, y_t)
         # print('{}: loss: {}'.format(t, loss))
         student_w = w
-    predict(test_X,test_y,min_w)
-    predict(test_X, test_y, w_init)
-    predict(test_X,test_y,student_w)
+
+    random_w = 0
+    random_select = student_model(lambd, w_init)
+    for t in range(training_epochs):
+        index = np.random.randint(0, train_X.shape[0])
+
+        _, random_w = random_select(train_X.iloc[index], train_y.iloc[index])
+
+    print('-' * 20)
+    print('w_init: {}'.format(predict(test_X, test_y, w_init)))
+    print('min_w: {}'.format(predict(test_X, test_y, min_w)))
+    print('random: {}'.format(predict(test_X, test_y, random_w)))
+    print('student_w: {}'.format(predict(test_X, test_y, student_w)))
+
+
 main()
 # %%
 
@@ -240,4 +254,3 @@ if __name__ == "__main__":
 # %%
 
 # %%
-mat = 0
