@@ -93,13 +93,45 @@ def loss_function():
 # %%
 
 
-def choice_data_set(w_t, w_, X, y, eta=0.01):
+def omniscient_teacher(w_t, w_, X, y, eta=0.01):
+    grad_loss_ = make_grad_loss_matrix(X, y, w_t)
+    choicer = omniscient_teacher_function(eta)
+    index = choicer(grad_loss_, w_t, w_)
+    index = np.array(index)
+    index = index[0]
+    X_t = X.iloc[index]
+    y_t = y.iloc[index]
+    # print(index)
+    return X_t, y_t
+# %%
+
+
+def omniscient_teacher_function(eta=0.01):
+    grad_loss = T.matrix(name='grad_loss')
+    w_ = T.vector(name='w_')
+    w_t = T.vector(name='w_t')
+
+    first = (eta ** 2) * (grad_loss ** 2).sum(axis=1)
+    second = -2 * eta * (T.dot(grad_loss, w_t - w_))
+    loss = first + second
+    argmin = T.argmin(loss)
+    function = theano.function(
+        inputs=[grad_loss, w_t, w_],
+        outputs=[argmin],
+        on_unused_input='ignore'
+    )
+    return function
+
+# %%
+
+
+def surrogate_teacher(w_t, w_, X, y, eta=0.01):
     grad_loss_ = make_grad_loss_matrix(X, y, w_t)
     loss = loss_function()
     loss_t = np.array(loss(X, y, w_t)).flatten()
     loss__ = np.array(loss(X, y, w_)).flatten()
 
-    choicer = choice_date_set_function(eta)
+    choicer = surrogate_teacher_function(eta)
     index = choicer(grad_loss_, loss_t, loss__)
     index = np.array(index).flatten()
     index = index[0]
@@ -111,7 +143,7 @@ def choice_data_set(w_t, w_, X, y, eta=0.01):
 # %%
 
 
-def choice_date_set_function(eta=0.01):
+def surrogate_teacher_function(eta=0.01):
     grad_loss_ = T.matrix(name='grad_loss')
     loss_t = T.vector(name='loss_t')
     loss__ = T.vector(name='loss__')
@@ -198,14 +230,17 @@ def main():
     X = df.drop('Spe', axis=1)
     y = df['Spe']
 
+    # train_X, test_X, train_y, test_y = train_test_split(
+    #     X, y, shuffle=True, random_state=88
+    # )
     train_X, test_X, train_y, test_y = train_test_split(
-        X, y, shuffle=True, random_state=88
+        X, y, shuffle=True
     )
 
-    np.random.seed(seed=88)
+    # np.random.seed(seed=28)
     lambd = 0.01
     eta = 0.01
-    training_epochs = 10
+    training_epochs = 1000
     w_init = np.random.normal(loc=0.0, scale=lambd, size=train_X.shape[1])
 
     train = model(train_X, train_y, lambd, w_init)
@@ -221,14 +256,15 @@ def main():
 
     print('-' * 20)
 
-    student = student_model(lambd, w_init)
+    training_epochs = 5
+    surrogate_student = student_model(lambd, w_init)
     w_t = w_init
-    student_w = 0
+    surrogate_w = 0
     for t in range(training_epochs):
-        X_t, y_t = choice_data_set(w_t, min_w, train_X, train_y, eta=0.01)
-        loss, w = student(X_t, y_t)
+        X_t, y_t = surrogate_teacher(w_t, min_w, train_X, train_y, eta=0.01)
+        loss, w = surrogate_student(X_t, y_t)
         # print('{}: loss: {}'.format(t, loss))
-        student_w = w
+        surrogate_w = w
 
     random_w = 0
     random_select = student_model(lambd, w_init)
@@ -236,12 +272,20 @@ def main():
         index = np.random.randint(0, train_X.shape[0])
 
         _, random_w = random_select(train_X.iloc[index], train_y.iloc[index])
+    omni_student = student_model(lambd, w_init)
+    w_t = w_init
+    omni_w = 99999
+    for t in range(training_epochs):
+        X_t, y_t = omniscient_teacher(w_t, min_w, train_X, train_y, eta=0.01)
+        loss, w = omni_student(X_t, y_t)
+        omni_w = w
 
     print('-' * 20)
     print('w_init: {}'.format(predict(test_X, test_y, w_init)))
     print('min_w: {}'.format(predict(test_X, test_y, min_w)))
-    print('random: {}'.format(predict(test_X, test_y, random_w)))
-    print('student_w: {}'.format(predict(test_X, test_y, student_w)))
+    print('random_w: {}'.format(predict(test_X, test_y, random_w)))
+    print('surrogate_w: {}'.format(predict(test_X, test_y, surrogate_w)))
+    print('omni_w: {}'.format(predict(test_X, test_y, omni_w)))
 
 
 main()
