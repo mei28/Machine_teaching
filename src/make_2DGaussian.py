@@ -206,7 +206,7 @@ def make_data():
 
     val_ves = np.random.multivariate_normal(ves_mu, ves_sigma, 1000)
     sns.jointplot(val_ves[:, 0], val_ves[:, 1])
-    val_ves = val_ves[val_ves[:, 0] + val_ves[:, 1] > 0]
+    # val_ves = val_ves[val_ves[:, 0] + val_ves[:, 1] > 0]
     # val_ves[:, 0] = np.exp([val_ves[:, 0]])
 
     plt.show()
@@ -216,7 +216,7 @@ def make_data():
 
     val_wee = np.random.multivariate_normal(wee_mu, wee_sigma, 1000)
     sns.jointplot(val_wee[:, 0], val_wee[:, 1])
-    val_wee = val_wee[val_wee[:, 0] + val_wee[:, 1] < 0]
+    # val_wee = val_wee[val_wee[:, 0] + val_wee[:, 1] < 0]
     # val_wee[:, 0] = np.exp(val_wee[:, 0])
     plt.show()
 
@@ -226,7 +226,7 @@ def make_data():
     df_ves = pd.DataFrame(val_ves)
     df_ves['Spe'] = 0
 
-    #weebil 1 vespula 0
+    # weebil 1 vespula 0
 
     df_all = pd.concat([df_wee, df_ves], axis=0)
     sns.scatterplot(data=df_all, x=0, y=1, hue='Spe')
@@ -243,9 +243,11 @@ def make_data():
 
 def main():
     df_all = make_data()
-    df_all = df_all.rename(columns={0:'f1',1:'f2'})
-    df_all.to_csv('output/weebil_vespula.csv',index=False)
-#%%
+    df_all = df_all.rename(columns={0: 'f1', 1: 'f2'})
+    df_all.to_csv('output/weebil_vespula.csv', index=False)
+
+
+
 main()
 
 # %%
