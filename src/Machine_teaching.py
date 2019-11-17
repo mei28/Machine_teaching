@@ -1,12 +1,16 @@
 # %%
-import pandas as pd
-import numpy as np
-from sklearn.model_selection import train_test_split
-from collections import OrderedDict
-import theano.tensor as T
-import theano
+import copy
+import make_Y_w
 from sklearn.metrics import roc_auc_score
-
+import theano
+import theano.tensor as T
+from collections import OrderedDict
+from sklearn.model_selection import train_test_split
+import numpy as np
+import pandas as pd
+import sys
+sys.path.append('src')
+# %%
 
 theano.config.gcc.cxxflags = "-Wno-c++11-narrowing"
 # %%
@@ -43,6 +47,21 @@ class SGD(Optimizer):
 
 
 def make_grad_loss_matrix(X, y, w):
+    """return grad loss matrix
+
+    Parameters
+    ----------
+    X : pandas matrix
+        feature matrix
+    y : pandas vector
+        predict
+    w : numpy 
+        model parameter    
+    Returns
+    -------
+    numpy matrix
+        grad loss matrix
+    """
     grad_loss_matrix = np.zeros((X.shape[0], w.shape[0]))
     grad_loss = grad_loss_function()
     for i in range(X.shape[0]):
@@ -57,6 +76,15 @@ def make_grad_loss_matrix(X, y, w):
 
 
 def grad_loss_function():
+    """
+    return grad loss function
+
+    Returns
+    -------
+    grad loss function
+    inputs = [X,y,w]
+    outputs = [grad_loss]
+    """
     X = T.vector(name='X')
     y = T.scalar(name='y')
     w = T.vector(name='w')
@@ -77,6 +105,15 @@ def grad_loss_function():
 
 
 def loss_function():
+    """
+    return loss function 
+
+    Returns
+    -------
+    return loss function
+    inputs = [X,y,w]
+    outputs = [loss]
+    """
     X = T.matrix(name='X')
     y = T.vector(name='y')
     w = T.vector(name='w')
@@ -94,11 +131,32 @@ def loss_function():
 
 
 def omniscient_teacher(w_t, w_, X, y, eta=0.01):
+    """
+    return X_t, y_t by omniscient teacher
+
+    Parameters
+    ----------
+    w_t : numpy vector
+        worker's model parameter
+    w_ : numpy vector 
+        w*
+    X : pandas matrix
+        feature matrix
+    y : pandas vector
+        predict vector
+    eta : float, optional
+        w_t parameter, by default 0.01
+
+    Returns
+    -------
+    return X_t, y_t
+    """
     grad_loss_ = make_grad_loss_matrix(X, y, w_t)
     choicer = omniscient_teacher_function(eta)
     index = choicer(grad_loss_, w_t, w_)
     index = np.array(index)
     index = index[0]
+    print("omni: {}".format(index))
     X_t = X.iloc[index]
     y_t = y.iloc[index]
     # print(index)
@@ -107,6 +165,20 @@ def omniscient_teacher(w_t, w_, X, y, eta=0.01):
 
 
 def omniscient_teacher_function(eta=0.01):
+    """
+    return omniscient teacher function
+
+    Parameters
+    ----------
+    eta : float, optional
+        w_t parameter, by default 0.01
+
+    Returns
+    -------
+    return function
+        inputs = [grad_loss,w_t,w_]
+        outputs = [argmin]
+    """
     grad_loss = T.matrix(name='grad_loss')
     w_ = T.vector(name='w_')
     w_t = T.vector(name='w_t')
@@ -126,6 +198,26 @@ def omniscient_teacher_function(eta=0.01):
 
 
 def surrogate_teacher(w_t, w_, X, y, eta=0.01):
+    """
+    return X_t,y_t by surrogate teacher
+
+    Parameters
+    ----------
+    w_t : numpy vector
+        worker's parameter
+    w_ : numpy vector
+        w*
+    X : pandas matrix
+        feature matrix
+    y : pandas vector
+        predict vector
+    eta : float, optional
+        w_t's parameter, by default 0.01
+
+    Returns
+    -------
+    X_t, y_t
+    """
     grad_loss_ = make_grad_loss_matrix(X, y, w_t)
     loss = loss_function()
     loss_t = np.array(loss(X, y, w_t)).flatten()
@@ -138,12 +230,26 @@ def surrogate_teacher(w_t, w_, X, y, eta=0.01):
 
     X_t = X.iloc[index]
     y_t = y.iloc[index]
-    print(index)
+    print("surr: {}".format(index))
     return X_t, y_t
 # %%
 
 
 def surrogate_teacher_function(eta=0.01):
+    """
+    return surrogate teacher function
+
+    Parameters
+    ----------
+    eta : float, optional
+        w_t's parameter, by default 0.01
+
+    Returns
+    -------
+    surrogate teacher function
+        inputs = [gras_loss,loss_t,loss_*],
+        outputs = [argmin]
+    """
     grad_loss_ = T.matrix(name='grad_loss')
     loss_t = T.vector(name='loss_t')
     loss__ = T.vector(name='loss__')
@@ -159,7 +265,23 @@ def surrogate_teacher_function(eta=0.01):
 # %%
 
 
-def model(X, y, lambd, w_init):
+def model(lambd, w_init):
+    """
+    return model (to estimate w*)
+
+    Parameters
+    ----------
+    lambd : float
+        w's parameter
+    w_init : numpy vector
+        model parameter
+
+    Returns
+    -------
+    model 
+        inputs = [X,y]
+        outputs = [loss,w]
+    """
 
     X = T.matrix(name="X")
     y = T.vector(name="y")
@@ -188,6 +310,23 @@ def model(X, y, lambd, w_init):
 
 
 def student_model(lambd, w_init):
+    """
+    return student model
+    updates by X_t,y_t
+
+    Parameters
+    ----------
+    lambd : float
+        w_t parameter    
+     w_init : 
+        model parameter
+
+    Returns
+    -------
+        student
+        inputs = [X,y]
+        outputs = [loss,w]
+    """
     X = T.vector(name='X')
     y = T.scalar(name='y')
     w = theano.shared(w_init, name='w')
@@ -196,7 +335,7 @@ def student_model(lambd, w_init):
     xent = T.nnet.binary_crossentropy(logit, y)
     loss = xent + lambd * (w ** 2).sum() / 2
 
-    print('start: compile model')
+    print('start: compile student model')
     params = [w]
     updates = SGD(params=params).updates(loss)
 
@@ -207,18 +346,30 @@ def student_model(lambd, w_init):
         on_unused_input='ignore'
     )
 
-    print('complete: compile model')
+    print('complete: compile student model')
 
     return student
 # %%
 
 
 def predict(X, y, w):
+    """
+    return roc auc score
+
+    Parameters
+    ----------
+    X : pandas matrix
+        feature matrix
+    y : pandas vector
+        true predict
+    w : numpy vector 
+        model parameter
+    """
     logit = np.dot(X, w)
     pred_y = T.nnet.sigmoid(logit).eval()
     # pred_y = [1 if i > 0.5 else 0 for i in pred_y]
     return(roc_auc_score(y, pred_y))
-    print(roc_auc_score(y, pred_y))
+    # print(roc_auc_score(y, pred_y))
 # %%
 
 
@@ -230,9 +381,6 @@ def main():
     X = df.drop('Spe', axis=1)
     y = df['Spe']
 
-    # train_X, test_X, train_y, test_y = train_test_split(
-    #     X, y, shuffle=True, random_state=88
-    # )
     train_X, test_X, train_y, test_y = train_test_split(
         X, y, shuffle=True
     )
@@ -241,24 +389,25 @@ def main():
     lambd = 0.01
     eta = 0.01
     training_epochs = 1000
-    w_init = np.random.normal(loc=0.0, scale=lambd, size=train_X.shape[1])
 
-    train = model(train_X, train_y, lambd, w_init)
+    w_star, w_init = make_Y_w.estimate_w(
+        train_X, eta, lambd, J, training_epochs)
+
+    train = model(lambd, w_init)
 
     min_w = 9999
     for t in range(training_epochs):
         loss, w = train(train_X, train_y)
-
         # print('{}: loss: {}'.format(t, loss))
         min_w = w
-
-    predict(test_X, test_y, min_w)
 
     print('-' * 20)
 
     training_epochs = 5
-    surrogate_student = student_model(lambd, w_init)
-    w_t = w_init
+    print('training epochs: {}'.format(training_epochs))
+
+    w_t = copy.deepcopy(w_init)
+    surrogate_student = student_model(lambd, w_t)
     surrogate_w = 0
     for t in range(training_epochs):
         X_t, y_t = surrogate_teacher(w_t, min_w, train_X, train_y, eta=0.01)
@@ -270,19 +419,53 @@ def main():
     random_select = student_model(lambd, w_init)
     for t in range(training_epochs):
         index = np.random.randint(0, train_X.shape[0])
-
         _, random_w = random_select(train_X.iloc[index], train_y.iloc[index])
-    omni_student = student_model(lambd, w_init)
-    w_t = w_init
+
+    w_t = copy.deepcopy(w_init)
+    omni_student = student_model(lambd, w_t)
     omni_w = 99999
     for t in range(training_epochs):
         X_t, y_t = omniscient_teacher(w_t, min_w, train_X, train_y, eta=0.01)
         loss, w = omni_student(X_t, y_t)
         omni_w = w
 
-    print('-' * 20)
+    print('{}min_w{}'.format('-'*20, '-'*20))
     print('w_init: {}'.format(predict(test_X, test_y, w_init)))
     print('min_w: {}'.format(predict(test_X, test_y, min_w)))
+    print('random_w: {}'.format(predict(test_X, test_y, random_w)))
+    print('surrogate_w: {}'.format(predict(test_X, test_y, surrogate_w)))
+    print('omni_w: {}'.format(predict(test_X, test_y, omni_w)))
+
+    print('-'*20)
+    training_epochs = 5
+    print('training epochs: {}'.format(training_epochs))
+    w_t = copy.deepcopy(w_init)
+    surrogate_student = student_model(lambd, w_t)
+
+    surrogate_w = 0
+    for t in range(training_epochs):
+        X_t, y_t = surrogate_teacher(w_t, w_star, train_X, train_y, eta=0.01)
+        loss, w = surrogate_student(X_t, y_t)
+        # print('{}: loss: {}'.format(t, loss))
+        surrogate_w = w
+
+    random_w = 0
+    random_select = student_model(lambd, w_init)
+    for t in range(training_epochs):
+        index = np.random.randint(0, train_X.shape[0])
+        _, random_w = random_select(train_X.iloc[index], train_y.iloc[index])
+
+    w_t = copy.deepcopy(w_init)
+    omni_student = student_model(lambd, w_t)
+    omni_w = 99999
+    for t in range(training_epochs):
+        X_t, y_t = omniscient_teacher(w_t, w_star, train_X, train_y, eta=0.01)
+        loss, w = omni_student(X_t, y_t)
+        omni_w = w
+
+    print('{}w*{}'.format('-'*20, '-'*20))
+    print('w_init: {}'.format(predict(test_X, test_y, w_init)))
+    print('w*: {}'.format(predict(test_X, test_y, w_star)))
     print('random_w: {}'.format(predict(test_X, test_y, random_w)))
     print('surrogate_w: {}'.format(predict(test_X, test_y, surrogate_w)))
     print('omni_w: {}'.format(predict(test_X, test_y, omni_w)))
@@ -294,7 +477,3 @@ main()
 if __name__ == "__main__":
     main()
 
-# %%
-# %%
-
-# %%
