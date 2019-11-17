@@ -1,8 +1,7 @@
-# %%
-import sys
-sys.path.append('src')
 
-from Machine_teaching import predict
+
+# %%
+
 from collections import OrderedDict
 from sklearn.model_selection import train_test_split
 import theano.tensor as T
@@ -47,6 +46,20 @@ class SGD(Optimizer):
 
 
 def makeY(W, X):
+    """ make worker"s answer
+
+    Parameters
+    ----------
+    W : numpy
+        shape = (J,D)
+    X : pandas
+        shape = (N,D)
+
+    Returns
+    -------
+    numpy
+        shape = (N*J,)
+    """
     J, D = W.shape
     N = X.shape[0]
     Y = np.zeros((N * J))
@@ -54,14 +67,34 @@ def makeY(W, X):
         for n in range(N):
             logit = np.dot(W[j], X.iloc[n])
             p_1 = 1/(1 + math.exp(-logit))
-            Y[J * j + n] = np.random.choice(2, p=[1-p_1,p_1])
+            Y[J * j + n] = np.random.choice(2, p=[1-p_1, p_1])
     return Y
 # %%
 
 
-def makeW_w0(eta, lambd, J, X):
-    N, D = X.shape
-    w_0 = np.random.normal(
+def makeW_w_init(eta, lambd, J, D):
+    """make w_init and W
+
+    Parameters
+    ----------
+    eta : float
+        w_init's parameter
+    lambd : float
+            W's parameter
+    J : int
+        the number of workers
+    D : int
+        feature dimensions
+
+    Returns
+    -------
+    w_init
+        shape = (D,)
+    W
+        shape = (J,D)
+    """
+
+    w_init = np.random.normal(
         loc=0,
         scale=eta,
         size=D
@@ -69,16 +102,32 @@ def makeW_w0(eta, lambd, J, X):
     W = np.zeros((J, D))
 
     for j in range(J):
-        W[j] = np.random.normal(
-            loc=w_0,
-            scale=lambd,
-            size=w_0.shape
-        )
-    return W, w_0
+        # W[j] = np.random.normal(
+        #     loc=w_init,
+        #     scale=lambd,
+        #     size=w_init.shape
+        # )
+        W[j] = w_init + 0.01 * np.random.randn(D)
+    return W, w_init
 # %%
 
 
 def duplicate_W(W, N):
+    """
+    duplicate W (J,D) -> (J*N,D)
+
+    Parameters
+    ----------
+    W : numpy
+        shape = (J,D)
+    N : int
+        The number of questions
+
+    Returns
+    -------
+    W_
+        shape = (J*N,D)
+    """
     J, D = W.shape
     W_ = np.zeros((N * J, D))
     for j in range(J):
@@ -90,6 +139,25 @@ def duplicate_W(W, N):
 
 
 def estimate_w_model(w_, W, eta, lambd):
+    """
+    return model which is to estimate w* from worker's answer
+
+    Parameters
+    ----------
+    w_ : numpy vector
+         w*
+    W : numpy matrix
+        worker's model parameters
+    eta : float
+          w_init parameter
+    lambd : float
+          W parameter
+
+    Returns
+    -------
+    model
+        model which is to estimate w*
+    """
     X = T.matrix(name='X')
     y = T.vector(name='y')
     w_0 = theano.shared(w_, name='w_0')
@@ -120,6 +188,20 @@ def estimate_w_model(w_, W, eta, lambd):
 
 
 def remake_X(X, J):
+    """remake X (N,D) -> (N*J,D)
+
+    Parameters
+    ----------
+    X : pandas
+        shape = (N,D), feature matrix
+    J : int
+        The number of workers
+
+    Returns
+    -------
+    X_
+        shape = (N*J,D)
+    """
     N, D = X.shape
     X_ = np.zeros((N * J, D))
     for i in range(N * J):
@@ -128,20 +210,42 @@ def remake_X(X, J):
 # %%
 
 
-def estimate_w(X, y, w_, W, eta, lambd, epochs=10):
-    J, D = W.shape
-    N = X.shape[0]
+def estimate_w(X, eta=0.01, lambd=0.01, J=10, epochs=10):
+    """ return estimated w*
 
+    Parameters
+    ----------
+    X : pandas
+        shape = (N*J,D)
+    eta : float, optional
+        w_init's parameter, by default 0.01
+    lambd : float, optional
+        W's parameter, by default 0.01
+    J : int, optional
+        The number of workers, by default 10
+    epochs : int, optional
+        The number of training epochs, by default 10
+
+    Returns
+    -------
+    min_w
+        estimated w*
+    w_init
+        the first w
+    """
+    N, D = X.shape
+    W, w_init = makeW_w_init(eta, lambd, J, D=X.shape[1])
+    Y = makeY(W, X)
     W = duplicate_W(W, N)
     X = remake_X(X, J)
 
-    model = estimate_w_model(w_=w_, W=W, eta=eta, lambd=lambd)
+    model = estimate_w_model(w_=w_init, W=W, eta=eta, lambd=lambd)
 
     min_w = 9999999
     min_loss = 999999999
 
     for t in range(epochs):
-        loss, w_0, W_ = model(X, y)
+        loss, w_0, W_ = model(X, Y)
         # print('{}: loss:{}'.format(t, loss))
 
         if loss < min_loss:
@@ -149,7 +253,16 @@ def estimate_w(X, y, w_, W, eta, lambd, epochs=10):
             min_loss = loss
         else:
             break
-    return min_w
+    return min_w, w_init
+# %%
+
+
+def predict(X, y, w):
+    logit = np.dot(X, w)
+    pred_y = T.nnet.sigmoid(logit).eval()
+    # pred_y = [1 if i > 0.5 else 0 for i in pred_y]
+    return(roc_auc_score(y, pred_y))
+    print(roc_auc_score(y, pred_y))
 # %%
 
 
@@ -163,27 +276,22 @@ def main():
     train_X, test_X, train_y, test_y = train_test_split(
         X, y, shuffle=True
     )
-    N, D = train_X.shape
 
-    np.random.seed(11)
     # Wの生成
     eta = 0.01
     lambd = 0.01
 
-    W, w_0 = makeW_w0(eta, lambd, J, X)
-    train_Y = makeY(W, train_X)
-
-    min_w = estimate_w(train_X, train_Y, w_0, W, eta, lambd, epochs=99)
-    print(min_w)
+    min_w, w_init = estimate_w(X, eta, lambd, J=J, epochs=999)
 
     print('-' * 20)
-    print('w_init: {}'.format(predict(test_X, test_y, w_0)))
+    print(w_init)
+    print('w_init: {}'.format(predict(test_X, test_y, w_init)))
+    print(min_w)
 
     print('w_*: {}'.format(predict(test_X, test_y, min_w)))
 
 
-main()
+# main()
 # %%
 if __name__ == "__main__":
     main()
-
