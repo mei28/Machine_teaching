@@ -67,7 +67,7 @@ def makeY(W, X):
         for n in range(N):
             logit = np.dot(W[j], X.iloc[n])
             p_1 = 1/(1 + math.exp(-logit))
-            Y[J * j + n] = np.random.choice(2, p=[1-p_1, p_1])
+            Y[N * j + n] = np.random.choice(2, p=[1 - p_1, p_1])
     return Y
 # %%
 
