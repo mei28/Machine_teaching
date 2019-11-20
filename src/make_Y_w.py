@@ -9,7 +9,7 @@ import theano
 import pandas as pd
 import numpy as np
 import math
-
+from sklearn.metrics import roc_auc_score
 theano.config.gcc.cxxflags = "-Wno-c++11-narrowing"
 # %%
 
@@ -46,7 +46,7 @@ class SGD(Optimizer):
 
 
 def makeY(W, X):
-    """ make worker"s answer
+    """ make worker’s answer
 
     Parameters
     ----------
@@ -291,7 +291,7 @@ def main():
     print('w_*: {}'.format(predict(test_X, test_y, min_w)))
 
 
-# main()
+main()
 # %%
 if __name__ == "__main__":
     main()
