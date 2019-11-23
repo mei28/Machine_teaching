@@ -4,6 +4,7 @@
 
 from collections import OrderedDict
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import MinMaxScaler
 import theano.tensor as T
 import theano
 import pandas as pd
@@ -42,6 +43,7 @@ class SGD(Optimizer):
 
         return self.updates
 
+
 # %%
 
 
@@ -65,8 +67,8 @@ def makeY(W, X):
     Y = np.zeros((N * J))
     for j in range(J):
         for n in range(N):
-            logit = np.dot(W[j], X.iloc[n])
-            p_1 = 1/(1 + math.exp(-logit))
+            logit = np.dot(W[j, :], X.iloc[n])
+            p_1 = 1/(1+np.exp(-logit))
             Y[N * j + n] = np.random.choice(2, p=[1 - p_1, p_1])
     return Y
 # %%
@@ -102,12 +104,12 @@ def makeW_w_init(eta, lambd, J, D):
     W = np.zeros((J, D))
 
     for j in range(J):
-        # W[j] = np.random.normal(
-        #     loc=w_init,
-        #     scale=lambd,
-        #     size=w_init.shape
-        # )
-        W[j] = w_init + 0.01 * np.random.randn(D)
+        W[j] = np.random.normal(
+            loc=w_init,
+            scale=lambd,
+            size=w_init.shape
+        )
+        # W[j] = w_init + 0.01 * np.random.randn(D)
     return W, w_init
 # %%
 
@@ -271,6 +273,9 @@ def main():
     J = 10
     df = pd.read_csv('output/weebil_vespula.csv')
     X = df.drop('Spe', axis=1)
+    # ms = MinMaxScaler()
+    # X = ms.fit_transform(X)
+    # X = pd.DataFrame(X)
     y = df['Spe']
 
     train_X, test_X, train_y, test_y = train_test_split(
@@ -281,17 +286,17 @@ def main():
     eta = 0.01
     lambd = 0.01
 
-    min_w, w_init = estimate_w(X, eta, lambd, J=J, epochs=999)
+    min_w, w_init = estimate_w(X, eta, lambd, J=J, epochs=9999)
 
     print('-' * 20)
     print(w_init)
     print('w_init: {}'.format(predict(test_X, test_y, w_init)))
     print(min_w)
+    print('w_*_train: {}'.format(predict(train_X, train_y, min_w)))
+    print('w_*_test: {}'.format(predict(test_X, test_y, min_w)))
 
-    print('w_*: {}'.format(predict(test_X, test_y, min_w)))
 
-
-main()
+# main()
 # %%
 if __name__ == "__main__":
     main()
