@@ -1,4 +1,5 @@
 # %%
+
 import copy
 import make_Y_w
 from sklearn.metrics import roc_auc_score
@@ -10,6 +11,10 @@ import numpy as np
 import pandas as pd
 import sys
 sys.path.append('src')
+# %%
+
+# %%
+
 # %%
 
 theano.config.gcc.cxxflags = "-Wno-c++11-narrowing"
@@ -156,7 +161,7 @@ def omniscient_teacher(w_t, w_, X, y, eta=0.01):
     index = choicer(grad_loss_, w_t, w_)
     index = np.array(index)
     index = index[0]
-    print("omni: {}".format(index))
+    # print("omni: {}".format(index))
     X_t = X.iloc[index]
     y_t = y.iloc[index]
     # print(index)
@@ -230,7 +235,7 @@ def surrogate_teacher(w_t, w_, X, y, eta=0.01):
 
     X_t = X.iloc[index]
     y_t = y.iloc[index]
-    print("surr: {}".format(index))
+    # print("surr: {}".format(index))
     return X_t, y_t
 # %%
 
@@ -375,7 +380,8 @@ def predict(X, y, w):
 
 def main():
     # ワーカ数
-    J = 10
+    J = 2
+    # df = pd.read_csv('output/weebil_vespula_with_cut.csv')
     df = pd.read_csv('output/weebil_vespula.csv')
 
     X = df.drop('Spe', axis=1)
@@ -388,8 +394,8 @@ def main():
     # np.random.seed(seed=28)
     lambd = 0.01
     eta = 0.01
-    training_epochs = 1000
-
+    training_epochs = 10
+    print("training epochs: {}".format(training_epochs))
     w_star, w_init = make_Y_w.estimate_w(
         train_X, eta, lambd, J, training_epochs)
 
@@ -403,13 +409,12 @@ def main():
 
     print('-' * 20)
 
-    training_epochs = 5
-    print('training epochs: {}'.format(training_epochs))
+    teach_epochs = 5
 
     w_t = copy.deepcopy(w_init)
     surrogate_student = student_model(lambd, w_t)
     surrogate_w = 0
-    for t in range(training_epochs):
+    for t in range(teach_epochs):
         X_t, y_t = surrogate_teacher(w_t, min_w, train_X, train_y, eta=0.01)
         loss, w = surrogate_student(X_t, y_t)
         # print('{}: loss: {}'.format(t, loss))
@@ -417,18 +422,18 @@ def main():
 
     random_w = 0
     random_select = student_model(lambd, w_init)
-    for t in range(training_epochs):
+    for t in range(teach_epochs):
         index = np.random.randint(0, train_X.shape[0])
         _, random_w = random_select(train_X.iloc[index], train_y.iloc[index])
 
     w_t = copy.deepcopy(w_init)
     omni_student = student_model(lambd, w_t)
     omni_w = 99999
-    for t in range(training_epochs):
+    for t in range(teach_epochs):
         X_t, y_t = omniscient_teacher(w_t, min_w, train_X, train_y, eta=0.01)
         loss, w = omni_student(X_t, y_t)
         omni_w = w
-
+    print('teach epochs: {}'.format(teach_epochs))
     print('{}min_w{}'.format('-'*20, '-'*20))
     print('w_init: {}'.format(predict(test_X, test_y, w_init)))
     print('min_w: {}'.format(predict(test_X, test_y, min_w)))
@@ -437,13 +442,13 @@ def main():
     print('omni_w: {}'.format(predict(test_X, test_y, omni_w)))
 
     print('-'*20)
-    training_epochs = 5
-    print('training epochs: {}'.format(training_epochs))
+    teach_epochs = 5
+
     w_t = copy.deepcopy(w_init)
     surrogate_student = student_model(lambd, w_t)
 
     surrogate_w = 0
-    for t in range(training_epochs):
+    for t in range(teach_epochs):
         X_t, y_t = surrogate_teacher(w_t, w_star, train_X, train_y, eta=0.01)
         loss, w = surrogate_student(X_t, y_t)
         # print('{}: loss: {}'.format(t, loss))
@@ -451,21 +456,54 @@ def main():
 
     random_w = 0
     random_select = student_model(lambd, w_init)
-    for t in range(training_epochs):
+    for t in range(teach_epochs):
         index = np.random.randint(0, train_X.shape[0])
         _, random_w = random_select(train_X.iloc[index], train_y.iloc[index])
 
     w_t = copy.deepcopy(w_init)
     omni_student = student_model(lambd, w_t)
     omni_w = 99999
-    for t in range(training_epochs):
+    for t in range(teach_epochs):
         X_t, y_t = omniscient_teacher(w_t, w_star, train_X, train_y, eta=0.01)
         loss, w = omni_student(X_t, y_t)
         omni_w = w
-
+    print('teach epochs: {}'.format(teach_epochs))
     print('{}w*{}'.format('-'*20, '-'*20))
     print('w_init: {}'.format(predict(test_X, test_y, w_init)))
     print('w*: {}'.format(predict(test_X, test_y, w_star)))
+    print('random_w: {}'.format(predict(test_X, test_y, random_w)))
+    print('surrogate_w: {}'.format(predict(test_X, test_y, surrogate_w)))
+    print('omni_w: {}'.format(predict(test_X, test_y, omni_w)))
+
+    print('-'*20)
+    teach_epochs = 5
+
+    w_t = copy.deepcopy(w_init)
+    surrogate_student = student_model(lambd, w_t)
+
+    surrogate_w = 0
+    for t in range(teach_epochs):
+        X_t, y_t = surrogate_teacher(w_t, w_init, train_X, train_y, eta=0.01)
+        loss, w = surrogate_student(X_t, y_t)
+        # print('{}: loss: {}'.format(t, loss))
+        surrogate_w = w
+
+    random_w = 0
+    random_select = student_model(lambd, w_init)
+    for t in range(teach_epochs):
+        index = np.random.randint(0, train_X.shape[0])
+        _, random_w = random_select(train_X.iloc[index], train_y.iloc[index])
+
+    w_t = copy.deepcopy(w_init)
+    omni_student = student_model(lambd, w_t)
+    omni_w = 99999
+    for t in range(teach_epochs):
+        X_t, y_t = omniscient_teacher(w_t, w_init, train_X, train_y, eta=0.01)
+        loss, w = omni_student(X_t, y_t)
+        omni_w = w
+    print('teach epochs: {}'.format(teach_epochs))
+    print('{}w_init{}'.format('-'*20, '-'*20))
+    print('w_init: {}'.format(predict(test_X, test_y, w_init)))
     print('random_w: {}'.format(predict(test_X, test_y, random_w)))
     print('surrogate_w: {}'.format(predict(test_X, test_y, surrogate_w)))
     print('omni_w: {}'.format(predict(test_X, test_y, omni_w)))
@@ -476,4 +514,3 @@ main()
 
 if __name__ == "__main__":
     main()
-
