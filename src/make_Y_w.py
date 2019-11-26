@@ -9,7 +9,6 @@ import theano.tensor as T
 import theano
 import pandas as pd
 import numpy as np
-import math
 from sklearn.metrics import roc_auc_score
 theano.config.gcc.cxxflags = "-Wno-c++11-narrowing"
 # %%
@@ -74,43 +73,33 @@ def makeY(W, X):
 # %%
 
 
-def makeW_w_init(eta, lambd, J, D):
-    """make w_init and W
+def makeW(min_w, J, lambd=0.01):
+    """
+    make W 
 
     Parameters
     ----------
-    eta : float
-        w_init's parameter
-    lambd : float
-            W's parameter
-    J : int
-        the number of workers
-    D : int
-        feature dimensions
+    min_w : numpy
+        shape = (D,)
+    lambd : float, optional
+        W's parameter, by default 0.01
 
     Returns
     -------
-    w_init
-        shape = (D,)
-    W
-        shape = (J,D)
+    return W 
+        shape = (J,D) worker's model parameter
     """
-
-    w_init = np.random.normal(
-        loc=0,
-        scale=eta,
-        size=D
-    )
+    D = min_w.shape[0]
     W = np.zeros((J, D))
 
     for j in range(J):
         W[j] = np.random.normal(
-            loc=w_init,
+            loc=min_w,
             scale=lambd,
-            size=w_init.shape
+            size=min_w.shape
         )
         # W[j] = w_init + 0.01 * np.random.randn(D)
-    return W, w_init
+    return W
 # %%
 
 
@@ -212,7 +201,7 @@ def remake_X(X, J):
 # %%
 
 
-def estimate_w(X, eta=0.01, lambd=0.01, J=10, epochs=10):
+def estimate_w_star(X, min_w, eta=0.01, lambd=0.01, J=10, epochs=10):
     """ return estimated w*
 
     Parameters
@@ -230,20 +219,18 @@ def estimate_w(X, eta=0.01, lambd=0.01, J=10, epochs=10):
 
     Returns
     -------
-    min_w
-        estimated w*
-    w_init
-        the first w
+    w_star
+        shape = (D,)
     """
     N, D = X.shape
-    W, w_init = makeW_w_init(eta, lambd, J, D=X.shape[1])
+    W = makeW(min_w, J, lambd)
     Y = makeY(W, X)
     W = duplicate_W(W, N)
     X = remake_X(X, J)
 
-    model = estimate_w_model(w_=w_init, W=W, eta=eta, lambd=lambd)
+    model = estimate_w_model(w_=min_w, W=W, eta=eta, lambd=lambd)
 
-    min_w = 9999999
+    w_star = 9999999
     min_loss = 999999999
 
     for t in range(epochs):
@@ -251,11 +238,11 @@ def estimate_w(X, eta=0.01, lambd=0.01, J=10, epochs=10):
         # print('{}: loss:{}'.format(t, loss))
 
         if loss < min_loss:
-            min_w = w_0
+            w_star = w_0
             min_loss = loss
         else:
             break
-    return min_w, w_init
+    return w_star
 # %%
 
 
@@ -268,9 +255,89 @@ def predict(X, y, w):
 # %%
 
 
+def estimate_min_w(X, y, eta, training_epochs=10):
+    """return min_w
+
+    Parameters
+    ----------
+    X : pandas
+        shape = (N,D)
+    y : pandas
+        shape = (N,)
+    eta : int
+        w's parameter
+    training_epochs : int, optional
+        training epochs, by default 10
+
+    Returns
+    -------
+    min_w
+        shape = (D,)
+    """
+    w_init = np.random.normal(
+        loc=0,
+        scale=eta,
+        size=X.shape[1]
+    )
+    train = model(eta, w_init)
+
+    min_w = 9999
+    for t in range(training_epochs):
+        loss, w = train(X, y)
+        # print('{}: loss: {}'.format(t, loss))
+        min_w = w
+
+    return min_w
+# %%
+
+
+def model(eta, w_init):
+    """
+    return model (to estimate min_w)
+
+    Parameters
+    ----------
+    eta : float
+        w_init's parameter
+    w_init : numpy vector
+        model parameter
+
+    Returns
+    -------
+    model 
+        inputs = [X,y]
+        outputs = [loss,w]
+    """
+
+    X = T.matrix(name="X")
+    y = T.vector(name="y")
+    w = theano.shared(w_init, name="w")
+
+    logit = T.nnet.sigmoid(T.dot(X, w))
+    xent = T.nnet.binary_crossentropy(logit, y)
+    loss = xent.mean() + eta * (w ** 2).sum()/2
+
+    params = [w]
+    updates = SGD(params=params).updates(loss)
+
+    print('start: compile model')
+
+    train = theano.function(
+        inputs=[X, y],
+        outputs=[loss, w],
+        updates=updates,
+        on_unused_input='ignore'
+    )
+
+    print('complete: compile model')
+
+    return train
+# %%
+
+
 def main():
 
-    J = 10
+    J = 1
     df = pd.read_csv('output/weebil_vespula.csv')
     X = df.drop('Spe', axis=1)
     # ms = MinMaxScaler()
@@ -285,18 +352,20 @@ def main():
     # Wの生成
     eta = 0.01
     lambd = 0.01
-
-    min_w, w_init = estimate_w(X, eta, lambd, J=J, epochs=9999)
+    epochs = 50
+    min_w = estimate_min_w(train_X, train_y, eta, training_epochs=epochs)
+    epochs = 500
+    w_star = estimate_w_star(X, min_w, eta, lambd, J=J, epochs=epochs)
 
     print('-' * 20)
-    print(w_init)
-    print('w_init: {}'.format(predict(test_X, test_y, w_init)))
     print(min_w)
-    print('w_*_train: {}'.format(predict(train_X, train_y, min_w)))
-    print('w_*_test: {}'.format(predict(test_X, test_y, min_w)))
+    print('min_w: {}'.format(predict(test_X, test_y, min_w)))
+    print(w_star)
+    print('w_*_train: {}'.format(predict(train_X, train_y, w_star)))
+    print('w_*_test: {}'.format(predict(test_X, test_y, w_star)))
 
 
-# main()
+main()
 # %%
 if __name__ == "__main__":
     main()
