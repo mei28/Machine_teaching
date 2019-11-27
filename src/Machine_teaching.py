@@ -1,23 +1,19 @@
 # %%
 
-import copy
-import make_Y_w
-from sklearn.metrics import roc_auc_score
-import theano
-import theano.tensor as T
-from collections import OrderedDict
-from sklearn.model_selection import train_test_split
-import numpy as np
 import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from collections import OrderedDict
+import theano.tensor as T
+import theano
+from sklearn.metrics import roc_auc_score
+import make_Y_w
+import copy
 import sys
 sys.path.append('src')
-# %%
-
-# %%
-
-# %%
-
 theano.config.gcc.cxxflags = "-Wno-c++11-narrowing"
+
+
 # %%
 
 
@@ -76,6 +72,28 @@ def make_grad_loss_matrix(X, y, w):
 
     return grad_loss_matrix
 
+
+# %%
+
+
+def return_argmin_index(X):
+    """
+    return one argmin index
+
+    Parameters
+    ----------
+    X : list
+        loss list
+
+    Returns
+    -------
+    index
+        return one argmin index with random
+    """
+    X = np.array(X).flatten()
+    index_list = np.where(X == np.min(X))[0]
+    index = np.random.choice(index_list)
+    return index
 
 # %%
 
@@ -158,13 +176,11 @@ def omniscient_teacher(w_t, w_, X, y, eta=0.01):
     """
     grad_loss_ = make_grad_loss_matrix(X, y, w_t)
     choicer = omniscient_teacher_function(eta)
-    index = choicer(grad_loss_, w_t, w_)
-    index = np.array(index)
-    index = index[0]
-    # print("omni: {}".format(index))
+    loss = choicer(grad_loss_, w_t, w_)
+    index = return_argmin_index(loss)
+    print("omni: {}".format(index))
     X_t = X.iloc[index]
     y_t = y.iloc[index]
-    # print(index)
     return X_t, y_t
 # %%
 
@@ -182,7 +198,7 @@ def omniscient_teacher_function(eta=0.01):
     -------
     return function
         inputs = [grad_loss,w_t,w_]
-        outputs = [argmin]
+        outputs = [loss]
     """
     grad_loss = T.matrix(name='grad_loss')
     w_ = T.vector(name='w_')
@@ -191,10 +207,9 @@ def omniscient_teacher_function(eta=0.01):
     first = (eta ** 2) * (grad_loss ** 2).sum(axis=1)
     second = -2 * eta * (T.dot(grad_loss, w_t - w_))
     loss = first + second
-    argmin = T.argmin(loss)
     function = theano.function(
         inputs=[grad_loss, w_t, w_],
-        outputs=[argmin],
+        outputs=[loss],
         on_unused_input='ignore'
     )
     return function
@@ -229,14 +244,14 @@ def surrogate_teacher(w_t, w_, X, y, eta=0.01):
     loss__ = np.array(loss(X, y, w_)).flatten()
 
     choicer = surrogate_teacher_function(eta)
-    index = choicer(grad_loss_, loss_t, loss__)
-    index = np.array(index).flatten()
-    index = index[0]
+    loss = choicer(grad_loss_, loss_t, loss__)
+    index = return_argmin_index(loss)
 
     X_t = X.iloc[index]
     y_t = y.iloc[index]
-    # print("surr: {}".format(index))
+    print("surr: {}".format(index))
     return X_t, y_t
+
 # %%
 
 
@@ -253,17 +268,17 @@ def surrogate_teacher_function(eta=0.01):
     -------
     surrogate teacher function
         inputs = [gras_loss,loss_t,loss_*],
-        outputs = [argmin]
+        outputs = [loss]
     """
     grad_loss_ = T.matrix(name='grad_loss')
     loss_t = T.vector(name='loss_t')
     loss__ = T.vector(name='loss__')
     first = (eta**2)*(grad_loss_ ** 2).sum()
     second = -2*eta*(loss_t-loss__)
-    argmin_ = T.argmin(first + second)
+    loss = first + second
     t = theano.function(
         inputs=[grad_loss_, loss_t, loss__],
-        outputs=[argmin_],
+        outputs=[loss],
     )
     return t
 
@@ -380,7 +395,7 @@ def predict(X, y, w):
 
 def main():
     # ワーカ数
-    J = 2
+    J = 10
     # df = pd.read_csv('output/weebil_vespula_with_cut.csv')
     df = pd.read_csv('output/weebil_vespula.csv')
 
@@ -396,21 +411,20 @@ def main():
     eta = 0.01
     training_epochs = 10
     print("training epochs: {}".format(training_epochs))
-    w_star, w_init = make_Y_w.estimate_w(
-        train_X, eta, lambd, J, training_epochs)
 
-    train = model(lambd, w_init)
+    min_w = make_Y_w.estimate_min_w(train_X, train_y, eta, training_epochs)
 
-    min_w = 9999
-    for t in range(training_epochs):
-        loss, w = train(train_X, train_y)
-        # print('{}: loss: {}'.format(t, loss))
-        min_w = w
+    w_star = make_Y_w.estimate_w_star(
+        train_X, min_w, eta, lambd, J, training_epochs)
 
     print('-' * 20)
 
     teach_epochs = 5
-
+    w_init = np.random.normal(
+        loc=0,
+        scale=eta,
+        size=X.shape[1]
+    )
     w_t = copy.deepcopy(w_init)
     surrogate_student = student_model(lambd, w_t)
     surrogate_w = 0
@@ -433,6 +447,7 @@ def main():
         X_t, y_t = omniscient_teacher(w_t, min_w, train_X, train_y, eta=0.01)
         loss, w = omni_student(X_t, y_t)
         omni_w = w
+
     print('teach epochs: {}'.format(teach_epochs))
     print('{}min_w{}'.format('-'*20, '-'*20))
     print('w_init: {}'.format(predict(test_X, test_y, w_init)))
