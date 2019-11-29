@@ -172,7 +172,7 @@ def omniscient_teacher(w_t, w_, X, y, eta=0.01):
 
     Returns
     -------
-    return X_t, y_t
+    return X_t, y_t, index
     """
     grad_loss_ = make_grad_loss_matrix(X, y, w_t)
     choicer = omniscient_teacher_function(eta)
@@ -181,7 +181,7 @@ def omniscient_teacher(w_t, w_, X, y, eta=0.01):
     print("omni: {}".format(index))
     X_t = X.iloc[index]
     y_t = y.iloc[index]
-    return X_t, y_t
+    return X_t, y_t, index
 # %%
 
 
@@ -236,7 +236,7 @@ def surrogate_teacher(w_t, w_, X, y, eta=0.01):
 
     Returns
     -------
-    X_t, y_t
+    X_t, y_t, index
     """
     grad_loss_ = make_grad_loss_matrix(X, y, w_t)
     loss = loss_function()
@@ -250,7 +250,7 @@ def surrogate_teacher(w_t, w_, X, y, eta=0.01):
     X_t = X.iloc[index]
     y_t = y.iloc[index]
     print("surr: {}".format(index))
-    return X_t, y_t
+    return X_t, y_t, index
 
 # %%
 
@@ -406,6 +406,9 @@ def main():
         X, y, shuffle=True
     )
 
+    train_X.reset_index(drop=True, inplace=True)
+    train_y.reset_index(drop=True, inplace=True)
+
     # np.random.seed(seed=28)
     lambd = 0.01
     eta = 0.01
@@ -425,27 +428,42 @@ def main():
         scale=eta,
         size=X.shape[1]
     )
+
     w_t = copy.deepcopy(w_init)
     surrogate_student = student_model(lambd, w_t)
     surrogate_w = 0
+    train_X_ = train_X.copy(deep=True)
+    train_y_ = train_y.copy(deep=True)
     for t in range(teach_epochs):
-        X_t, y_t = surrogate_teacher(w_t, min_w, train_X, train_y, eta=0.01)
+        X_t, y_t, index = surrogate_teacher(
+            w_t, min_w, train_X_, train_y_, eta=0.01)
         loss, w = surrogate_student(X_t, y_t)
         # print('{}: loss: {}'.format(t, loss))
+        train_X_.drop(index, inplace=True)
+        train_y_.drop(index, inplace=True)
         surrogate_w = w
 
     random_w = 0
     random_select = student_model(lambd, w_init)
+    train_X_ = train_X.copy(deep=True)
+    train_y_ = train_y.copy(deep=True)
     for t in range(teach_epochs):
-        index = np.random.randint(0, train_X.shape[0])
-        _, random_w = random_select(train_X.iloc[index], train_y.iloc[index])
+        index = np.random.randint(0, train_X_.shape[0])
+        _, random_w = random_select(train_X_.iloc[index], train_y_.iloc[index])
+        train_X_.drop(index, inplace=True)
+        train_y_.drop(index, inplace=True)
 
     w_t = copy.deepcopy(w_init)
     omni_student = student_model(lambd, w_t)
     omni_w = 99999
+    train_X_ = train_X.copy(deep=True)
+    train_y_ = train_y.copy(deep=True)
     for t in range(teach_epochs):
-        X_t, y_t = omniscient_teacher(w_t, min_w, train_X, train_y, eta=0.01)
+        X_t, y_t, index = omniscient_teacher(
+            w_t, min_w, train_X_, train_y_, eta=0.01)
         loss, w = omni_student(X_t, y_t)
+        train_X_.drop(index, inplace=True)
+        train_y_.drop(index, inplace=True)
         omni_w = w
 
     print('teach epochs: {}'.format(teach_epochs))
@@ -461,27 +479,41 @@ def main():
 
     w_t = copy.deepcopy(w_init)
     surrogate_student = student_model(lambd, w_t)
-
     surrogate_w = 0
+    train_X_ = train_X.copy(deep=True)
+    train_y_ = train_y.copy(deep=True)
     for t in range(teach_epochs):
-        X_t, y_t = surrogate_teacher(w_t, w_star, train_X, train_y, eta=0.01)
+        X_t, y_t, index = surrogate_teacher(
+            w_t, w_star, train_X_, train_y_, eta=0.01)
         loss, w = surrogate_student(X_t, y_t)
         # print('{}: loss: {}'.format(t, loss))
+        train_X_.drop(index, inplace=True)
+        train_y_.drop(index, inplace=True)
         surrogate_w = w
 
     random_w = 0
     random_select = student_model(lambd, w_init)
+    train_X_ = train_X.copy(deep=True)
+    train_y_ = train_y.copy(deep=True)
     for t in range(teach_epochs):
-        index = np.random.randint(0, train_X.shape[0])
-        _, random_w = random_select(train_X.iloc[index], train_y.iloc[index])
+        index = np.random.randint(0, train_X_.shape[0])
+        _, random_w = random_select(train_X_.iloc[index], train_y_.iloc[index])
+        train_X_.drop(index, inplace=True)
+        train_y_.drop(index, inplace=True)
 
     w_t = copy.deepcopy(w_init)
     omni_student = student_model(lambd, w_t)
     omni_w = 99999
+    train_X_ = train_X.copy(deep=True)
+    train_y_ = train_y.copy(deep=True)
     for t in range(teach_epochs):
-        X_t, y_t = omniscient_teacher(w_t, w_star, train_X, train_y, eta=0.01)
+        X_t, y_t, index = omniscient_teacher(
+            w_t, w_star, train_X_, train_y_, eta=0.01)
         loss, w = omni_student(X_t, y_t)
+        train_X_.drop(index, inplace=True)
+        train_y_.drop(index, inplace=True)
         omni_w = w
+
     print('teach epochs: {}'.format(teach_epochs))
     print('{}w*{}'.format('-'*20, '-'*20))
     print('w_init: {}'.format(predict(test_X, test_y, w_init)))
@@ -495,27 +527,41 @@ def main():
 
     w_t = copy.deepcopy(w_init)
     surrogate_student = student_model(lambd, w_t)
-
+    train_X_ = train_X.copy(deep=True)
+    train_y_ = train_y.copy(deep=True)
     surrogate_w = 0
     for t in range(teach_epochs):
-        X_t, y_t = surrogate_teacher(w_t, w_init, train_X, train_y, eta=0.01)
+        X_t, y_t, index = surrogate_teacher(
+            w_t, w_init, train_X_, train_y_, eta=0.01)
         loss, w = surrogate_student(X_t, y_t)
         # print('{}: loss: {}'.format(t, loss))
+        train_X_.drop(index, inplace=True)
+        train_y_.drop(index, inplace=True)
         surrogate_w = w
 
     random_w = 0
     random_select = student_model(lambd, w_init)
+    train_X_ = train_X.copy(deep=True)
+    train_y_ = train_y.copy(deep=True)
     for t in range(teach_epochs):
-        index = np.random.randint(0, train_X.shape[0])
-        _, random_w = random_select(train_X.iloc[index], train_y.iloc[index])
+        index = np.random.randint(0, train_X_.shape[0])
+        _, random_w = random_select(train_X_.iloc[index], train_y_.iloc[index])
+        train_X_.drop(index, inplace=True)
+        train_y_.drop(index, inplace=True)
 
     w_t = copy.deepcopy(w_init)
     omni_student = student_model(lambd, w_t)
     omni_w = 99999
+    train_X_ = train_X.copy(deep=True)
+    train_y_ = train_y.copy(deep=True)
     for t in range(teach_epochs):
-        X_t, y_t = omniscient_teacher(w_t, w_init, train_X, train_y, eta=0.01)
+        X_t, y_t, index = omniscient_teacher(
+            w_t, w_init, train_X_, train_y_, eta=0.01)
         loss, w = omni_student(X_t, y_t)
+        train_X_.drop(index, inplace=True)
+        train_y_.drop(index, inplace=True)
         omni_w = w
+        
     print('teach epochs: {}'.format(teach_epochs))
     print('{}w_init{}'.format('-'*20, '-'*20))
     print('w_init: {}'.format(predict(test_X, test_y, w_init)))
