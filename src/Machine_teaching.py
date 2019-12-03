@@ -7,8 +7,7 @@ from collections import OrderedDict
 import theano.tensor as T
 import theano
 from sklearn.metrics import roc_auc_score
-import make_Y_w
-import copy
+from make_Y_w import estimate_w_star, estimate_min_w
 import sys
 sys.path.append('src')
 theano.config.gcc.cxxflags = "-Wno-c++11-narrowing"
@@ -92,6 +91,8 @@ def return_argmin_index(X):
     """
     X = np.array(X).flatten()
     index_list = np.where(X == np.min(X))[0]
+    # if len(index_list) > 1:
+    #     print('random choiced')
     index = np.random.choice(index_list)
     return index
 
@@ -415,9 +416,9 @@ def main():
     training_epochs = 10
     print("training epochs: {}".format(training_epochs))
 
-    min_w = make_Y_w.estimate_min_w(train_X, train_y, eta, training_epochs)
+    min_w = estimate_min_w(train_X, train_y, eta, training_epochs)
 
-    w_star = make_Y_w.estimate_w_star(
+    w_star = estimate_w_star(
         train_X, min_w, eta, lambd, J, training_epochs)
 
     print('-' * 20)
@@ -429,7 +430,7 @@ def main():
         size=X.shape[1]
     )
 
-    w_t = copy.deepcopy(w_init)
+    w_t = w_init.copy()
     surrogate_student = student_model(lambd, w_t)
     surrogate_w = 0
     train_X_ = train_X.copy(deep=True)
@@ -453,7 +454,7 @@ def main():
         train_X_.drop(index, inplace=True)
         train_y_.drop(index, inplace=True)
 
-    w_t = copy.deepcopy(w_init)
+    w_t = w_init.copy()
     omni_student = student_model(lambd, w_t)
     omni_w = 99999
     train_X_ = train_X.copy(deep=True)
@@ -477,7 +478,7 @@ def main():
     print('-'*20)
     teach_epochs = 5
 
-    w_t = copy.deepcopy(w_init)
+    w_t = w_init.copy()
     surrogate_student = student_model(lambd, w_t)
     surrogate_w = 0
     train_X_ = train_X.copy(deep=True)
@@ -501,7 +502,7 @@ def main():
         train_X_.drop(index, inplace=True)
         train_y_.drop(index, inplace=True)
 
-    w_t = copy.deepcopy(w_init)
+    w_t = w_init.copy()
     omni_student = student_model(lambd, w_t)
     omni_w = 99999
     train_X_ = train_X.copy(deep=True)
@@ -525,7 +526,7 @@ def main():
     print('-'*20)
     teach_epochs = 5
 
-    w_t = copy.deepcopy(w_init)
+    w_t = w_init.copy()
     surrogate_student = student_model(lambd, w_t)
     train_X_ = train_X.copy(deep=True)
     train_y_ = train_y.copy(deep=True)
@@ -549,7 +550,7 @@ def main():
         train_X_.drop(index, inplace=True)
         train_y_.drop(index, inplace=True)
 
-    w_t = copy.deepcopy(w_init)
+    w_t = w_init.copy()
     omni_student = student_model(lambd, w_t)
     omni_w = 99999
     train_X_ = train_X.copy(deep=True)
@@ -561,7 +562,7 @@ def main():
         train_X_.drop(index, inplace=True)
         train_y_.drop(index, inplace=True)
         omni_w = w
-        
+
     print('teach epochs: {}'.format(teach_epochs))
     print('{}w_init{}'.format('-'*20, '-'*20))
     print('w_init: {}'.format(predict(test_X, test_y, w_init)))
