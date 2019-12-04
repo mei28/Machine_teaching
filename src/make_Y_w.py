@@ -201,7 +201,7 @@ def remake_X(X, J):
 # %%
 
 
-def estimate_w_star(X, min_w, eta=0.01, lambd=0.01, J=10, epochs=10):
+def estimate_w_star(X, min_w, eta=0.01, lambd=0.01, J=10, training_epochs=10):
     """ return estimated w*
 
     Parameters
@@ -233,7 +233,7 @@ def estimate_w_star(X, min_w, eta=0.01, lambd=0.01, J=10, epochs=10):
     w_star = 9999999
     min_loss = 999999999
 
-    for t in range(epochs):
+    for t in range(training_epochs):
         loss, w_0, W_ = model(X, Y)
         # print('{}: loss:{}'.format(t, loss))
 
@@ -355,7 +355,7 @@ def main():
     epochs = 50
     min_w = estimate_min_w(train_X, train_y, eta, training_epochs=epochs)
     epochs = 500
-    w_star = estimate_w_star(X, min_w, eta, lambd, J=J, epochs=epochs)
+    w_star = estimate_w_star(X, min_w, eta, lambd, J=J, training_epochs=epochs)
 
     print('-' * 20)
     print(min_w)
@@ -365,7 +365,5 @@ def main():
     print('w_*_test: {}'.format(predict(test_X, test_y, w_star)))
 
 
-main()
-# %%
 if __name__ == "__main__":
     main()
