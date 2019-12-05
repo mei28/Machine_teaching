@@ -122,9 +122,9 @@ def duplicate_W(W, N):
     J, D = W.shape
     W_ = np.zeros((N * J, D))
     for j in range(J):
-        tmp = np.tile(W[j], (N, 1))
-        W_[j * N: (j + 1) * N] = tmp
-
+        tmp = W[j].copy()
+        for n in range(N):
+            W_[N*j+n] = tmp
     return W_
 # %%
 
@@ -175,6 +175,7 @@ def estimate_w_model(w_, W, eta, lambd):
     )
     print('end: compile estimate w* moddel')
     return model
+
 # %%
 
 
