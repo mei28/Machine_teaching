@@ -1,5 +1,5 @@
 # %%
-
+import import_path
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
@@ -8,8 +8,6 @@ import theano.tensor as T
 import theano
 from sklearn.metrics import roc_auc_score
 from make_Y_w import estimate_w_star, estimate_min_w
-import sys
-sys.path.append('src')
 theano.config.gcc.cxxflags = "-Wno-c++11-narrowing"
 
 
