@@ -1,7 +1,9 @@
+
 import pandas as pd
 import numpy as np
 import theano
 import theano.tensor as T
+from sklearn.metrics import roc_auc_score
 
 
 def make_grad_loss_matrix(X, y, w):
@@ -101,3 +103,11 @@ def return_argmin_index(X):
     #     print('random choiced')
     index = np.random.choice(index_list)
     return index
+
+
+def predict(X, y, w):
+    logit = np.dot(X, w)
+    pred_y = T.nnet.sigmoid(logit).eval()
+    # pred_y = [1 if i > 0.5 else 0 for i in pred_y]
+    return(roc_auc_score(y, pred_y))
+    print(roc_auc_score(y, pred_y))
