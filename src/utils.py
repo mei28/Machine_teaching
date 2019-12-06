@@ -111,3 +111,7 @@ def predict(X, y, w):
     # pred_y = [1 if i > 0.5 else 0 for i in pred_y]
     return(roc_auc_score(y, pred_y))
     print(roc_auc_score(y, pred_y))
+
+
+def write_np2csv(X, path):
+    np.savetxt('output/{}.csv'.format(path), X, delimiter=',')
