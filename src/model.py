@@ -3,11 +3,15 @@ import theano
 import theano.tensor as T
 import pandas as pd
 import numpy as np
+theano.config.gcc.cxxflags = "-Wno-c++11-narrowing"
 
 
 class Model():
     def __init__(self, w_init):
         self.w = w_init
+
+    def make_loss_function(self):
+        pass
 
     def learn(self, X, y):
         pass
@@ -17,6 +21,54 @@ class Model():
 
     def make_model(self):
         pass
+
+
+class W_star_model(Model):
+    def __init__(self, w_init, eta, lambd, W_):
+        super().__init__(w_init)
+        self.eta = eta
+        self.lambd = lambd
+        self.W_ = W_.copy()
+
+    def make_loss_function(self):
+        X = T.matrix(name='X')
+        y = T.vector(name='y')
+        w_0 = theano.shared(self.w, name='w_0')
+        W_ = theano.shared(self.W_, name='W_')
+
+        first = self.lambd * ((W_ - w_0) ** 2).sum() / 2
+        second = self.eta * (w_0 ** 2).sum() / 2
+
+        p_1 = T.nnet.nnet.sigmoid((W_*X).sum(axis=1))
+        xent = T.nnet.nnet.binary_crossentropy(p_1, y)
+        third = xent.mean()
+
+        loss = first + second + third
+        params = [w_0, W_]
+        updates = SGD(params=params).updates(loss)
+
+        print('start: compile estimate w* model')
+        model = theano.function(
+            inputs=[X, y],
+            outputs=[loss, w_0, W_],
+            updates=updates,
+            on_unused_input='ignore'
+        )
+        print('end: compile estimate w* moddel')
+        return model
+
+    def learn(self, X, y, training_epochs=10):
+        model = self.make_loss_function()
+        print('start: learning')
+        for i in range(training_epochs):
+            loss, self.w, self.W = model(X, y)
+        print('end: learning')
+        return self.w, self.W
+
+    def response(self, X):
+        logit = np.dot(X, self.w)
+        pred_y = T.nnet.sigmoid(logit).eval()
+        return pred_y
 
 
 class Logistic_model(Model):
