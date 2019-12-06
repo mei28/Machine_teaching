@@ -6,7 +6,7 @@ TRAIN_DATA = '../input/train.csv'
 TEST_DATA = '../input/test.csv'
 
 
-def read_csv(path):
+def read_csv(path, header=None):
     """read csv file, return data frame
 
     Parameters
@@ -18,7 +18,7 @@ def read_csv(path):
     -------
     return pandas df
     """
-    df = pd.read_csv(path)
+    df = pd.read_csv(path, header=header)
     return df
 
 
