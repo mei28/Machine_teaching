@@ -6,6 +6,12 @@ TRAIN_DATA = '../input/train.csv'
 TEST_DATA = '../input/test.csv'
 
 
+def read_W(path, header=None):
+    df = pd.read_csv(path, header=header)
+    np_matrix = df.values
+    return np_matrix
+
+
 def read_csv(path, header=None):
     """read csv file, return data frame
 
