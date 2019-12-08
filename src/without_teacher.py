@@ -6,9 +6,10 @@ from load_data import read_W
 from model import *
 
 
-class Without_teacher(Oracle):
-    def __init__(self, min_w):
-        super().__init__()
+class Without_teacher():
+    def __init__(self, min_w, eta=0.01, lambd=0.01):
+        self.eta = eta
+        self.lambd = lambd
         self.w_star = None
         self.W = None
         self.min_w = min_w.copy()
