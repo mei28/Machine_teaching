@@ -6,6 +6,16 @@ import theano.tensor as T
 
 class Teacher():
     def __init__(self, min_w, eta=0.01):
+        """
+        teacher base class
+
+        Parameters
+        ----------
+        min_w : numpy
+            true model parameter
+        eta : float, optional
+            learning rate, by default 0.01
+        """
         super().__init__()
         self.min_w = min_w.copy()
         self.eta = eta
@@ -106,6 +116,18 @@ class Teacher():
         return index
 
     def drop_textbook(self, X, y, index):
+        """
+        drop text book from textbool pool
+
+        Parameters
+        ----------
+        X : pandas
+            text book pool
+        y : pandas
+            goap
+        index : int
+            index which is dropped
+        """
         X.drop(index, inplace=True)
         y.drop(index, inplace=True)
         X.reset_index(drop=True, inplace=True)

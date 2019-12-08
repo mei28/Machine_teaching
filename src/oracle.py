@@ -12,8 +12,8 @@ class Oracle():
     min_w = None
 
     def __init__(self, eta=0.01, lambd=0.01):
-        """[summary]
-
+        """
+        constructor
         Parameters
         ----------
         eta : float, optional
@@ -25,6 +25,23 @@ class Oracle():
         self.lambd = lambd
 
     def estimate_min_w(self, X, y, training_epochs=10):
+        """
+        estimate true_w
+
+        Parameters
+        ----------
+        X : pandas
+            feature 
+        y : pandas
+            goal
+        training_epochs : int, optional
+            the number of training epochs, by default 10
+
+        Returns
+        -------
+        numpy 
+            true model parameter
+        """
         w_init = np.random.normal(
             loc=0,
             scale=self.eta,

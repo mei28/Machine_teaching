@@ -40,6 +40,24 @@ class Omniscient(Teacher):
         return function
 
     def return_textbook(self, X, y, w_t, w_):
+        """
+        return text book
+
+        Parameters
+        ----------
+        X : pandas
+            text book pook
+        y : pandas
+            goal
+        w_t : numpy
+            worker's parameter when t times
+        w_ : numpy
+            true model parameter
+
+        Returns
+        -------
+        X_t,y_t,index
+        """
         grad_loss = self.make_grad_loss_matrix(X, y, w_t)
         choicer = self.make_loss_function()
         loss_matrix = choicer(grad_loss, w_t, w_)

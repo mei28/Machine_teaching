@@ -7,30 +7,90 @@ theano.config.gcc.cxxflags = "-Wno-c++11-narrowing"
 
 
 class Model():
+    """
+    base learning model
+    """
+
     def __init__(self, w_init):
+        """
+        constructor
+
+        Parameters
+        ----------
+        w_init : numpy
+            leaner's parameter
+        """
         self.w = w_init
 
     def make_loss_function(self):
+        """
+        define loss function
+        """
         pass
 
     def learn(self, X, y):
+        """
+        learn and update w
+
+        Parameters
+        ----------
+        X : pandas
+            feature matrix
+        y : pandas
+            goal feature
+        """
         pass
 
     def response(self, X):
+        """return predict by w
+
+        Parameters
+        ----------
+        X : pandas
+            feature matrix
+        """
         pass
 
     def make_model(self):
+        """
+        to make learn function
+        """
         pass
 
 
 class W_star_model(Model):
     def __init__(self, w_init, eta, lambd, W_):
+        """
+        constructor
+
+        Parameters
+        ----------
+        Model : base 
+            base class
+        w_init : numpy
+            model parameter
+        eta : float
+            w_star's parameter
+        lambd : float
+            W's parameter
+        W_ : numpy
+            W parameters
+        """
         super().__init__(w_init)
         self.eta = eta
         self.lambd = lambd
         self.W_ = W_.copy()
 
     def make_loss_function(self):
+        """
+        make loss function
+
+        Returns
+        -------
+        theano.function
+        inputs=[X,y]
+        outputs=[loss,w_0,W_]
+        """
         X = T.matrix(name='X')
         y = T.vector(name='y')
         w_0 = theano.shared(self.w, name='w_0')
@@ -66,6 +126,17 @@ class W_star_model(Model):
         return self.w, self.W
 
     def response(self, X):
+        """
+        predict by logistic
+
+        Parameters
+        ----------
+        X : pandas
+
+        Returns
+        -------
+        return predict
+        """
         logit = np.dot(X, self.w)
         pred_y = T.nnet.sigmoid(logit).eval()
         return pred_y
@@ -73,6 +144,16 @@ class W_star_model(Model):
 
 class Logistic_model(Model):
     def __init__(self, w_init, lambd):
+        """
+        logistic learning model
+        
+        Parameters
+        ----------
+        Model : base class
+        w_init : model parameter
+        lambd : float
+            learning rate
+        """
         super().__init__(w_init)
         self.lambd = lambd
 

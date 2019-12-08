@@ -7,6 +7,20 @@ TEST_DATA = '../input/test.csv'
 
 
 def read_W(path, header=None):
+    """read W file and return W pandas
+
+    Parameters
+    ----------
+    path : it is where the file is
+
+    header : bool, optional
+        wherther or not header, by default None
+
+    Returns
+    -------
+    pandas
+        W pandas
+    """
     df = pd.read_csv(path, header=header)
     np_matrix = df.values
     return np_matrix
