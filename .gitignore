@@ -1,2 +1,4 @@
 img/*
 output/
+src/__pycache__/
+__pycache__
