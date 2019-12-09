@@ -115,3 +115,8 @@ def predict(X, y, w):
 
 def write_np2csv(X, path):
     np.savetxt('output/{}.csv'.format(path), X, delimiter=',')
+
+
+def return_copy_dateset(X,y):
+    return X.copy(deep = True),y.copy(deep=True)
+    # return date.copy(deep=True)
