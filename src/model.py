@@ -110,7 +110,7 @@ class W_star_model(Model):
         print('start: compile estimate w* model')
         model = theano.function(
             inputs=[X, y],
-            outputs=[loss, w_0, W_],
+            outputs=[loss, w_0],
             updates=updates,
             on_unused_input='ignore'
         )
@@ -121,9 +121,9 @@ class W_star_model(Model):
         model = self.make_loss_function()
         print('start: learning')
         for i in range(training_epochs):
-            loss, self.w, self.W = model(X, y)
+            loss, self.w = model(X, y)
         print('end: learning')
-        return self.w, self.W
+        return self.w
 
     def response(self, X):
         """
@@ -146,7 +146,7 @@ class Logistic_model(Model):
     def __init__(self, w_init, lambd):
         """
         logistic learning model
-        
+
         Parameters
         ----------
         Model : base class

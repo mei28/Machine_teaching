@@ -7,7 +7,7 @@ from model import *
 
 
 class Without_teacher():
-    def __init__(self, min_w, eta=0.01, lambd=0.01):
+    def __init__(self, min_w, eta=0.01, lambd=0.01, alpha=0.01):
         """[summary]
 
         Parameters
@@ -18,11 +18,14 @@ class Without_teacher():
             [description], by default 0.01
         lambd : float, optional
             [description], by default 0.01
+        alpha : float, optional
+            [description], by default 0.01
         """
         self.eta = eta
         self.lambd = lambd
         self.w_star = None
         self.W = None
+        self.alpha = p = alpha
         self.min_w = min_w.copy()
 
     def estimate_w_star(self, X, W, training_epochs=10):
@@ -40,7 +43,7 @@ class Without_teacher():
 
         Returns
         -------
-        return estimated W_
+
         """
         N, D = X.shape
         J = W.shape[0]
@@ -50,9 +53,8 @@ class Without_teacher():
         X = self.remake_X(X.copy(deep=True), J)
         model = W_star_model(self.min_w, self.eta, self.lambd, W_)
 
-        self.w_star, W_ = model.learn(X, Y, training_epochs)
+        self.w_star = model.learn(X, Y, training_epochs)
         # self.W = self.resize_W(W_, N)
-        return W_
 
     def duplicate_W(self, W, N):
         """
@@ -147,3 +149,128 @@ class Without_teacher():
             W[j] = W_[N * j].copy()
 
         return W
+
+    def update_W(self, W, X):
+        """
+        to update W
+
+        Parameters
+        ----------
+        W : numpy
+            worker's model parameter
+        X : pandas
+            text book pool
+
+        Returns
+        -------
+        W   numpy
+            updated W
+        """
+        N, D = X.shape
+        J = W.shape[0]
+        W_new = np.zeros(shape=(J, D))
+
+        for j in range(J):
+            w_j_old = W[j, :].copy()
+            y = self.predict_y(X, w_j_old)
+            H = self.hessian_function(X, y, w_j_old)
+            H_inv = np.linalg.inv(H)
+            g = self.grad_wj(X, y, w_j_old)
+            W_new[j, :] = w_j_old - (self.alpha * H_inv * g).sum()
+
+        return W_new
+
+    def grad_wj(self, X, y, w_j):
+        """
+        calc grad wj        
+        Parameters
+        ----------
+        X : pandas
+        y : pandas
+        w_j : numpy
+            worker's model parameter
+
+        Returns
+        -------
+        return grad w_j numpy
+        """
+        g = self.grad_wj_function()
+        g_ = np.array(g(X, y, w_j, self.w_star)).flatten()
+        return np.array(g_).flatten()
+
+    def hessian_function(self, X, y, w_j):
+        """
+        make hessian matrix
+
+        Parameters
+        ----------
+        X : pandas
+            textbook pool
+        y : numpy
+            worker's answer
+        w_j : numpy
+            worker's model parameter
+
+        Returns
+        -------
+        return hessian matrix
+        """
+        K, L = w_j.shape[0], w_j.shape[0]
+        I = X.shape[0]
+        hes = 0
+        hessian = np.zeros(shape=(L, K))
+        for l in range(L):
+            for k in range(K):
+                for i in range(I):
+                    logit = 1 / (1 + np.exp(-np.dot(X.iloc[i], w_j)))
+                    hes += (1-logit)*(logit)*X.iat[i, k]*X.iat[i, l]
+                hessian[k, l] = hes
+                hes = 0
+        hessian = hessian + self.lambd*np.eye(K)
+        return hessian
+
+    def grad_wj_function(self):
+        """
+        return grad wj function
+
+        Returns
+        -------
+        inputs = [X,y,w_j,w_star]
+        outputs = [calc]
+        """
+        X = T.matrix(name='X')
+        y = T.vector(name='y')
+        w_j = T.vector(name='w_j')
+        w_star = T.vector(name='w_star')
+
+        logit = (y - T.nnet.sigmoid(T.dot(X, w_j)))
+        calc = T.dot(logit, X) - self.lambd*(w_j - w_star)
+
+        function = theano.function(
+            inputs=[X, y, w_j, w_star],
+            outputs=[calc],
+
+        )
+        return function
+
+    def predict_y(self, X, w):
+        """
+        return predicted y
+        Parameters
+        ----------
+        X : pandas
+        w : numpy
+            model parameter
+
+        Returns
+        -------
+        return predicted y numpy
+        """
+        N, D = X.shape
+        y = np.zeros(N)
+        for n in range(N):
+            logit = np.dot(X.iloc[n], w)
+            p_1 = 1 / (1 + np.exp(-logit))
+            y[n] = np.random.choice(2, p=[1 - p_1, p_1])
+
+        return y
