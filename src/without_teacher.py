@@ -8,6 +8,17 @@ from model import *
 
 class Without_teacher():
     def __init__(self, min_w, eta=0.01, lambd=0.01):
+        """[summary]
+
+        Parameters
+        ----------
+        min_w : [type]
+            [description]
+        eta : float, optional
+            [description], by default 0.01
+        lambd : float, optional
+            [description], by default 0.01
+        """
         self.eta = eta
         self.lambd = lambd
         self.w_star = None
@@ -15,6 +26,22 @@ class Without_teacher():
         self.min_w = min_w.copy()
 
     def estimate_w_star(self, X, W, training_epochs=10):
+        """
+        estimate w_star from worker's ans
+
+        Parameters
+        ----------
+        X : pandas
+            shape = (N,D)
+        W : numpy
+            worker's model parameter
+        training_epochs : int, optional
+            training epochs, by default 10
+
+        Returns
+        -------
+        return estimated W_
+        """
         N, D = X.shape
         J = W.shape[0]
 
@@ -98,6 +125,21 @@ class Without_teacher():
         return X_
 
     def resize_W(self, W_, N):
+        """
+        resize shape (J*N,D) → (J,D)
+
+        Parameters
+        ----------
+        W_ : numpy
+            shape = (J*N,D)
+        N : int
+            the number of problem
+
+        Returns
+        -------
+        numpy 
+            shape = (J,D)
+        """
         J = int(W_.shape[0] / N)
         D = W_.shape[1]
         W = np.zeros((J, D))
