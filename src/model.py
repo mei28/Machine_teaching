@@ -59,7 +59,7 @@ class Model():
 
 
 class W_star_model(Model):
-    def __init__(self, w_init, eta, lambd, W_):
+    def __init__(self, w_init, eta, lambd, W):
         """
         constructor
 
@@ -79,9 +79,9 @@ class W_star_model(Model):
         super().__init__(w_init)
         self.eta = eta
         self.lambd = lambd
-        self.W_ = W_.copy()
+        self.W = W.copy()
 
-    def make_loss_function(self):
+    def make_w_star_loss_function(self):
         """
         make loss function
 
@@ -94,7 +94,7 @@ class W_star_model(Model):
         X = T.matrix(name='X')
         y = T.vector(name='y')
         w_0 = theano.shared(self.w, name='w_0')
-        W_ = theano.shared(self.W_, name='W_')
+        W_ = T.matrix(name='W_')
 
         first = self.lambd * ((W_ - w_0) ** 2).sum() / 2
         second = self.eta * (w_0 ** 2).sum() / 2
@@ -104,12 +104,12 @@ class W_star_model(Model):
         third = xent.mean()
 
         loss = first + second + third
-        params = [w_0, W_]
+        params = [w_0]
         updates = SGD(params=params).updates(loss)
 
         print('start: compile estimate w* model')
         model = theano.function(
-            inputs=[X, y],
+            inputs=[X, y, W_],
             outputs=[loss, w_0],
             updates=updates,
             on_unused_input='ignore'
@@ -117,13 +117,56 @@ class W_star_model(Model):
         print('end: compile estimate w* moddel')
         return model
 
-    def learn(self, X, y, training_epochs=10):
-        model = self.make_loss_function()
+    def make_wj_loss_function(self, w_j):
+        X = T.matrix(name='X')
+        y = T.vector(name='y')
+        w_star = T.vector(name='w_star')
+        w_j = theano.shared(w_j, name='w_j')
+
+        first = self.lambd * ((w_j - w_star) ** 2).sum() / 2
+        second = self.eta * (w_star ** 2).sum() / 2
+
+        p_1 = T.nnet.sigmoid(T.dot(X, w_j))
+        xent = T.nnet.binary_crossentropy(p_1, y)
+        third = xent.mean()
+
+        loss = first + second + third
+
+        params = [w_j]
+        updates = SGD(params=params).updates(loss)
+        function = theano.function(
+            inputs=[X, y, w_star],
+            outputs=[loss, w_j],
+            updates=updates,
+            on_unused_input='ignore'
+        )
+        return function
+
+    def learn_w_star(self, X, y, W_, training_epochs=10):
+        model = self.make_w_star_loss_function()
         print('start: learning')
         for i in range(training_epochs):
-            loss, self.w = model(X, y)
+            loss, self.w = model(X, y, W_)
         print('end: learning')
         return self.w
+
+    def learn_W(self, X_, Y, training_epochs=10):
+        J = self.W.shape[0]
+        N_, D = X_.shape
+        N = N_ // J
+        print('start: learning')
+        for j in range(J):
+            w_j = self.W[j, :]
+            model = self.make_wj_loss_function(w_j)
+            y = Y[N * j: N * (j + 1)]
+            X = X_[N * j: N * (j + 1)]
+            for i in range(training_epochs):
+                loss, w_j_new = model(X, y, self.w)
+
+            self.W[j, :] = np.array(w_j_new).flatten()
+
+        print('end: learning')
+        return self.W
 
     def response(self, X):
         """
