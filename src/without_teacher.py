@@ -274,3 +274,16 @@ class Without_teacher():
             y[n] = np.random.choice(2, p=[1 - p_1, p_1])
 
         return y
+
+    def update_W_SGD(self, X, y, W, training_epochs=10):
+        J, D = W.shape
+        W_new = np.zeros_like(W)
+        print('start: update W')
+        for j in range(J):
+            w_j = W[j, :]
+            log_model = Logistic_model(w_j, self.alpha)
+            log_model.learn(X, y, training_epochs=training_epochs)
+            w_j_new = log_model.w
+            W_new[j] = w_j_new
+        print('end: update W')
+        return W_new
