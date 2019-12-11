@@ -177,10 +177,10 @@ class W_star_model(Model):
             it means w_star
         """
         model = self.make_w_star_loss_function()
-        print('start: learning')
+        # print('start: learning')
         for i in range(training_epochs):
             loss, self.w = model(X, y, W_)
-        print('end: learning')
+        # print('end: learning')
         return self.w
 
     def learn_W(self, X_, Y, training_epochs=10):
@@ -203,7 +203,7 @@ class W_star_model(Model):
         J = self.W.shape[0]
         N_, D = X_.shape
         N = N_ // J
-        print('start: learning')
+        # print('start: learning')
         for j in range(J):
             w_j = self.W[j, :]
             model = self.make_wj_loss_function(w_j)
@@ -214,7 +214,7 @@ class W_star_model(Model):
 
             self.W[j, :] = np.array(w_j_new).flatten()
 
-        print('end: learning')
+        # print('end: learning')
         return self.W
 
     def response(self, X):
