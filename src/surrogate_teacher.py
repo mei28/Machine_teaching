@@ -6,7 +6,7 @@ import theano.tensor as T
 
 
 class Surrogate(Teacher):
-    def __init__(self, min_w, eta=0.01):
+    def __init__(self, min_w, alpha=0.01):
         """
         constructor
 
@@ -15,10 +15,10 @@ class Surrogate(Teacher):
         Teacher : base model class
         min_w : numpy
             true model parameter            
-        eta : float, optional
+        alpha : float, optional
             learning rate, by default 0.01
         """
-        super().__init__(min_w, eta=eta)
+        super().__init__(min_w, alpha=alpha)
 
     def make_loss_function(self):
         """
@@ -33,8 +33,8 @@ class Surrogate(Teacher):
         grad_loss_ = T.matrix(name='grad_loss')
         loss_t = T.vector(name='loss_t')
         loss__ = T.vector(name='loss__')
-        first = (self.eta**2)*(grad_loss_ ** 2).sum()
-        second = -2*self.eta*(loss_t-loss__)
+        first = (self.alpha**2)*(grad_loss_ ** 2).sum()
+        second = -2*self.alpha*(loss_t-loss__)
         loss = first + second
         t = theano.function(
             inputs=[grad_loss_, loss_t, loss__],
@@ -42,7 +42,7 @@ class Surrogate(Teacher):
         )
         return t
 
-    def return_textbook(self, X, y, w_t, w_):
+    def return_textbook(self, X, y, w_t, w_, drop=True):
         """
         return text book
 
@@ -53,7 +53,7 @@ class Surrogate(Teacher):
         y : pandas
             goal
         w_t : numpy
-            
+
         w_ : [type]
             [description]
 
@@ -70,8 +70,9 @@ class Surrogate(Teacher):
         choicer = self.make_loss_function()
         loss_matrix = choicer(grad_loss, loss_t, loss__)
         index = self.return_argmin_index(loss_matrix)
-        print('surr: {}'.format(index))
+        # print('surr: {}'.format(index))
         X_t, y_t = X.iloc[index], y.iloc[index]
-        self.drop_textbook(X, y, index)
+        if drop:
+            self.drop_textbook(X, y, index)
 
         return X_t, y_t, index

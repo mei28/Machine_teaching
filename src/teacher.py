@@ -5,7 +5,7 @@ import theano.tensor as T
 
 
 class Teacher():
-    def __init__(self, min_w, eta=0.01):
+    def __init__(self, min_w, alpha=0.01):
         """
         teacher base class
 
@@ -13,12 +13,12 @@ class Teacher():
         ----------
         min_w : numpy
             true model parameter
-        eta : float, optional
+        alpha : float, optional
             learning rate, by default 0.01
         """
         super().__init__()
         self.min_w = min_w.copy()
-        self.eta = eta
+        self.alpha = alpha
 
     def make_grad_loss_matrix(self, X, y, w):
         """return grad loss matrix
@@ -115,7 +115,7 @@ class Teacher():
         index = np.random.choice(index_list)
         return index
 
-    def drop_textbook(self, X, y, index):
+    def drop_textbook(self, X, y, index_set):
         """
         drop text book from textbool pool
 
@@ -128,7 +128,14 @@ class Teacher():
         index : int
             index which is dropped
         """
-        X.drop(index, inplace=True)
-        y.drop(index, inplace=True)
-        X.reset_index(drop=True, inplace=True)
-        y.reset_index(drop=True, inplace=True)
+        if type(index_set) is np.int64:
+            X.drop(index_set, inplace=True)
+            y.drop(index_set, inplace=True)
+            X.reset_index(drop=True, inplace=True)
+            y.reset_index(drop=True, inplace=True)
+        else:
+            for index in index_set:
+                X.drop(index, inplace=True)
+                y.drop(index, inplace=True)
+            X.reset_index(drop=True, inplace=True)
+            y.reset_index(drop=True, inplace=True)
