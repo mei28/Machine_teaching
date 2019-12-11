@@ -113,6 +113,18 @@ def predict(X, y, w):
     print(roc_auc_score(y, pred_y))
 
 
+def predict_by_W(X, y, W):
+    J, D = W.shape
+    val = 0
+    auc_list = np.zeros(J)
+    for j in range(J):
+        w_j = W[j, :]
+        tmp = predict(X, y, w_j)
+        auc_list[j] = tmp
+        # print('j: {}'.format(tmp))
+    return auc_list.mean()
+
+
 def write_np2csv(X, path):
     np.savetxt('output/{}.csv'.format(path), X, delimiter=',')
 
