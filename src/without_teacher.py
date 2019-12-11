@@ -27,21 +27,67 @@ class Without_teacher():
         self.W = W
 
     def learn(self, X, training_epochs=10):
+        """
+        learn and update w_star and W
+
+        Parameters
+        ----------
+        X : pandas
+            shape = (N,D)
+        training_epochs : int, optional
+            training epochs, by default 10
+        """
         N, D = X.shape
         J = self.W.shape[0]
+        print('start: w_star and W')
         for i in range(training_epochs):
             Y = self.makeY(self.W.copy(), X.copy())
             W_ = self.duplicate_W(self.W.copy(), N)
             X_ = self.remake_X(X.copy(), J)
             self.update_w_star(X_, Y, W_, training_epochs)
             self.update_W(X_, Y, training_epochs)
+        print('end: w_star and W')
 
     def update_w_star(self, X, Y, W_, training_epochs=10):
+        """
+        update w_star
+
+        Parameters
+        ----------
+        X : numpy
+            shape = (J*N,D)
+        Y : numpy
+            shape = (J*N,)
+        W_ : numpy
+            shape = (J*N,D)
+        training_epochs : int, optional
+            training epochs, by default 10
+
+        Returns
+        -------
+        return w_star
+        """
         model = W_star_model(self.w_star, self.eta, self.lambd, self.W)
         self.w_star = model.learn_w_star(X, Y, W_, training_epochs)
         return self.w_star
 
     def update_W(self, X, Y, training_epochs=10):
+        """
+        update_W
+
+        Parameters
+        ----------
+        X : numpy
+            shape = (J*N,D)
+        Y : numpy
+            shape = (J*N,)
+        training_epochs : int, optional
+            training epochs, by default 10
+
+        Returns
+        -------
+        return self.W
+        """
         model = W_star_model(self.w_star, self.eta, self.lambd, self.W)
         self.W = model.learn_W(X, Y, training_epochs=training_epochs)
         return self.W

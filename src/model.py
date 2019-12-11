@@ -83,13 +83,13 @@ class W_star_model(Model):
 
     def make_w_star_loss_function(self):
         """
-        make loss function
+        make w_star loss function
 
         Returns
         -------
         theano.function
         inputs=[X,y]
-        outputs=[loss,w_0,W_]
+        outputs=[loss,w_star]
         """
         X = T.matrix(name='X')
         y = T.vector(name='y')
@@ -107,17 +107,31 @@ class W_star_model(Model):
         params = [w_0]
         updates = SGD(params=params).updates(loss)
 
-        print('start: compile estimate w* model')
+        # print('start: compile estimate w* model')
         model = theano.function(
             inputs=[X, y, W_],
             outputs=[loss, w_0],
             updates=updates,
             on_unused_input='ignore'
         )
-        print('end: compile estimate w* moddel')
+        # print('end: compile estimate w* moddel')
         return model
 
     def make_wj_loss_function(self, w_j):
+        """
+        make w_j loss function for updating W
+
+        Parameters
+        ----------
+        w_j : numpy
+            shape=(D,) worker:J's model parameter
+
+        Returns
+        -------
+        theano.function
+            inputs=[X,y,w_star]
+            outputs=[loss,w_j]
+        """
         X = T.matrix(name='X')
         y = T.vector(name='y')
         w_star = T.vector(name='w_star')
@@ -143,6 +157,25 @@ class W_star_model(Model):
         return function
 
     def learn_w_star(self, X, y, W_, training_epochs=10):
+        """
+        learn w_star and update
+
+        Parameters
+        ----------
+        X : numpy
+            shape = (J*N,D)
+        y : numpy
+            shape = (J*N,)
+        W_ : numpy
+            shape = (J*N,D)
+        training_epochs : int, optional
+            training epochs, by default 10
+
+        Returns
+        -------
+        self.w
+            it means w_star
+        """
         model = self.make_w_star_loss_function()
         print('start: learning')
         for i in range(training_epochs):
@@ -151,6 +184,22 @@ class W_star_model(Model):
         return self.w
 
     def learn_W(self, X_, Y, training_epochs=10):
+        """
+        learn and update W
+
+        Parameters
+        ----------
+        X_ : numpy
+            shape = (J*N,D)
+        Y : numpy
+            shape = (J*N,)
+        training_epochs : int, optional
+            training epochs, by default 10
+
+        Returns
+        -------
+        self.W
+        """
         J = self.W.shape[0]
         N_, D = X_.shape
         N = N_ // J
