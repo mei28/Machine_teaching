@@ -93,24 +93,24 @@ class W_star_model(Model):
         """
         X = T.matrix(name='X')
         y = T.vector(name='y')
-        w_0 = theano.shared(self.w, name='w_0')
+        w_star = theano.shared(self.w, name='w_0')
         W_ = T.matrix(name='W_')
 
-        first = self.lambd * ((W_ - w_0) ** 2).sum() / 2
-        second = self.eta * (w_0 ** 2).sum() / 2
+        first = self.lambd * ((W_ - w_star) ** 2).sum() / 2
+        second = self.eta * (w_star ** 2).sum() / 2
 
         p_1 = T.nnet.nnet.sigmoid((W_*X).sum(axis=1))
         xent = T.nnet.nnet.binary_crossentropy(p_1, y)
         third = xent.mean()
 
         loss = first + second + third
-        params = [w_0]
+        params = [w_star]
         updates = SGD(params=params).updates(loss)
 
         # print('start: compile estimate w* model')
         model = theano.function(
             inputs=[X, y, W_],
-            outputs=[loss, w_0],
+            outputs=[loss, w_star],
             updates=updates,
             on_unused_input='ignore'
         )
