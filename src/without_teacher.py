@@ -4,10 +4,11 @@ import numpy as np
 import pandas as pd
 from load_data import read_W
 from model import *
+from omniscient_teacher import Omniscient
 
 
 class Without_teacher():
-    def __init__(self, w, W, eta=0.01, lambd=0.01):
+    def __init__(self, w, W, eta=0.01, lambd=0.01, alpha=0.01):
         """[summary]
 
         Parameters
@@ -25,8 +26,14 @@ class Without_teacher():
         self.lambd = lambd
         self.w_star = w
         self.W = W
+        self.alpha = alpha
+        self.W_star = np.random.normal(
+            loc=self.w_star,
+            scale=lambd,
+            size=W.shape
+        )
 
-    def learn(self, X, training_epochs=10):
+    def learn(self, X, training_epochs=10, loops=10):
         """
         learn and update w_star and W
 
@@ -38,14 +45,19 @@ class Without_teacher():
             training epochs, by default 10
         """
         N, D = X.shape
-        J = self.W.shape[0]
+        J = self.W_star.shape[0]
+        self.W_star = np.random.normal(
+            loc=self.w_star,
+            scale=self.lambd,
+            size=self.W.shape
+        )
         print('start: w_star and W')
         for i in range(training_epochs):
             Y = self.makeY(self.W.copy(), X.copy())
-            W_ = self.duplicate_W(self.W.copy(), N)
+            W_ = self.duplicate_W(self.W_star.copy(), N)
             X_ = self.remake_X(X.copy(), J)
-            self.update_w_star(X_, Y, W_, training_epochs)
-            self.update_W(X_, Y, training_epochs)
+            self.update_w_star(X_, Y, W_, loops)
+            self.update_W(X_, Y, loops)
         print('end: w_star and W')
 
     def update_w_star(self, X, Y, W_, training_epochs=10):
@@ -88,9 +100,9 @@ class Without_teacher():
         -------
         return self.W
         """
-        model = W_star_model(self.w_star, self.eta, self.lambd, self.W)
-        self.W = model.learn_W(X, Y, training_epochs=training_epochs)
-        return self.W
+        model = W_star_model(self.w_star, self.eta, self.lambd, self.W_star)
+        self.W_star = model.learn_W(X, Y, training_epochs=training_epochs)
+        return self.W_star
 
     def estimate_w_star(self, X, W, training_epochs=10):
         """
@@ -236,3 +248,22 @@ class Without_teacher():
             y[n] = np.random.choice(2, p=[1 - p_1, p_1])
 
         return y
+
+    def return_text_book_omni(self, X, y, W):
+        J, D = W.shape
+
+        om_teacher = Omniscient(self.w_star, alpha=self.alpha)
+        X_pool = np.zeros(shape=(J, D))
+        y_pool = np.zeros(shape=(J))
+        index_set = set()
+        for j in range(J):
+            w_j = W[j, :]
+            X_t, y_t, index = om_teacher.return_textbook(
+                X, y, w_j, self.w_star, drop=True)
+            X_pool[j, :] = X_t
+            y_pool[j] = y_t
+            index_set.add(index)
+        # om_teacher.drop_textbook(X, y, index_set)
+        X_pool = pd.DataFrame(X_pool)
+        y_pool = pd.DataFrame(y_pool)
+        return X_pool, y_pool, index_set
