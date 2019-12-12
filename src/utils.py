@@ -132,3 +132,8 @@ def write_np2csv(X, path):
 def return_copy_dateset(X, y):
     return X.copy(deep=True), y.copy(deep=True)
     # return date.copy(deep=True)
+
+
+def rmse_W(W, W_star, axis=None):
+    ans = np.sqrt(((W - W_star)**2).mean(axis))
+    return ans
