@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import MinMaxScaler
 
 TRAIN_DATA = '../input/train.csv'
 TEST_DATA = '../input/test.csv'
@@ -52,7 +53,7 @@ def load_test_data():
     return df
 
 
-def split_data(df):
+def split_data(df, normalization=True):
     """
     split data frame into train and test
     Parameters
@@ -66,6 +67,10 @@ def split_data(df):
     return train ans test data frame
     """
     X = df.drop('Spe', axis=1)
+    if normalization:
+        ms = MinMaxScaler()
+        X = ms.fit_transform(X)
+        X = pd.DataFrame(X)
     y = df['Spe']
     train_X, test_X, train_y, test_y = train_test_split(
         X, y, shuffle=True
