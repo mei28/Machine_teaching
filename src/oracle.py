@@ -57,7 +57,7 @@ class Oracle():
         lr = LogisticRegression(fit_intercept=False)
         lr.fit(X, y)
         self.min_w = lr.coef_[0]
-        return self.min_w
+        return lr.coef_[0]
 
     def make_W_init(self, J):
         """make first W
@@ -75,10 +75,10 @@ class Oracle():
         W = np.zeros((J, self.min_w.shape[0]))
 
         for j in range(J):
-            # W[j, :] = np.random.normal(
-            #     loc=self.min_w,
-            #     scale=self.lambd,
-            #     size=self.min_w.shape[0]
-            # )
-            W[j, :] = self.min_w
+            W[j, :] = np.random.normal(
+                loc=self.min_w,
+                scale=self.lambd,
+                size=self.min_w.shape[0]
+            )
+            # W[j, :] = self.min_w
         return W
