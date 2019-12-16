@@ -32,7 +32,7 @@ class Without_teacher():
             scale=lambd,
             size=W.shape
         )
-
+    
     def learn(self, X, training_epochs=10, loops=10):
         """
         learn and update w_star and W
@@ -45,20 +45,19 @@ class Without_teacher():
             training epochs, by default 10
         """
         N, D = X.shape
-        J = self.W_star.shape[0]
-        self.W_star = np.random.normal(
-            loc=self.w_star,
-            scale=self.lambd,
-            size=self.W.shape
-        )
-        print('start: w_star and W')
-        for i in range(training_epochs):
-            Y = self.makeY(self.W.copy(), X.copy())
-            W_ = self.duplicate_W(self.W_star.copy(), N)
-            X_ = self.remake_X(X.copy(), J)
-            self.update_w_star(X_, Y, W_, loops)
-            self.update_W(X_, Y, loops)
-        print('end: w_star and W')
+        J = self.W.shape[0]
+
+        X_ = self.remake_X(X, J)
+        W_ = self.duplicate_W(self.W, N)
+        W_star_ = self.duplicate_W(self.W_star, N)
+        Y = self.makeY(W_, X_)
+
+        model = W_star_model(self.w_star, W_star_, self.eta, self.lambd)
+        w_star, W_ = model.learn(X_, Y, training_epochs)
+        W = self.resize_W(W_, N)
+
+        self.w_star, self.W_star = w_star, W
+        return w_star, W
 
     def update_w_star(self, X, Y, W_, training_epochs=10):
         """
@@ -155,15 +154,15 @@ class Without_teacher():
                 W_[N*j+n] = tmp
         return W_
 
-    def makeY(self, W, X):
+    def makeY(self, W, X_):
         """ make worker’s answer
 
         Parameters
         ----------
         W : numpy
             shape = (J,D)
-        X : pandas
-            shape = (N,D)
+        X_ : pandas
+            shape = (J*N,D)
 
         Returns
         -------
@@ -171,15 +170,14 @@ class Without_teacher():
             shape = (N*J,)
         """
         J, D = W.shape
-        N = X.shape[0]
-        Y = np.zeros((N * J))
+        N = X_.shape[0]
+        Y = np.zeros((N))
 
-        return Y
-        for j in range(J):
-            for n in range(N):
-                logit = np.dot(W[j, :], X.iloc[n, :])
-                p_1 = 1/(1+np.exp(-logit))
-                Y[N * j + n] = np.random.choice(2, p=[1 - p_1, p_1])
+        for i in range(N):
+            logit = np.dot(W[i, :], X_[i, :])
+            p_1 = 1/(1+np.exp(-logit))
+            Y[i] = np.random.choice(2, p=[1 - p_1, p_1])
+
         return Y
 
     def remake_X(self, X, J):
@@ -223,7 +221,7 @@ class Without_teacher():
         D = W_.shape[1]
         W = np.zeros((J, D))
         for j in range(J):
-            W[j] = W_[N * j].copy()
+            W[j] = W_[N * j:N*(j+1)].mean()
 
         return W
 
