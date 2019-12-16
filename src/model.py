@@ -59,9 +59,9 @@ class Model():
 
 
 class W_star_model():
-    def __init__(self, w_init, W_, eta, lambd):
+    def __init__(self, w_init, W, eta, lambd):
         self.w_star = w_init
-        self.W_ = W_
+        self.W = W
         self.eta = eta
         self.lambd = lambd
 
@@ -69,39 +69,129 @@ class W_star_model():
         X = T.matrix(name="X")
         y = T.vector(name="y")
         w_star = theano.shared(self.w_star, name="w_0")
-        W_ = theano.shared(self.W_, name="W_")
-        lambd = self.lambd
-        eta = self.eta
+        W = theano.shared(self.W, name='W')
 
-        first = lambd * ((W_-w_star)**2).sum()/2
-        second = eta * (w_star ** 2).sum()/2
+        first = self.lambd * ((W-w_star)**2).sum()/2
+        second = self.eta * (w_star ** 2).sum()/2
 
-        p_1 = T.nnet.nnet.sigmoid((W_*X).sum(axis=1))
+        logit = T.flatten(T.dot(X, W.T))
+        p_1 = T.nnet.nnet.sigmoid(logit)
         xent = T.nnet.nnet.binary_crossentropy(p_1, y)
         third = xent.sum()
 
         loss = first + second + third
-        params = [w_star, W_]
+        params = [w_star, W]
         updates = SGD(params=params).updates(loss)
 
-        print('start: compile model')
+        # print('start: compile model')
         train = theano.function(
             inputs=[X, y],
-            outputs=[loss, w_star, W_],
+            outputs=[loss, w_star, W],
             updates=updates,
             on_unused_input='ignore'
         )
-        print('end: compile model')
+        # print('end: compile model')
+
+        return train
+
+    def model_w_star(self):
+        X = T.matrix(name="X")
+        y = T.vector(name="y")
+        w_star = theano.shared(self.w_star, name="w_0")
+        W = T.matrix(name='W')
+
+        first = self.lambd * ((W-w_star)**2).sum()/2
+        second = self.eta * (w_star ** 2).sum()/2
+
+        logit = T.flatten(T.dot(X, W.T))
+        p_1 = T.nnet.nnet.sigmoid(logit)
+        xent = T.nnet.nnet.binary_crossentropy(p_1, y)
+        third = xent.sum()
+
+        loss = first + second + third
+        params = [w_star]
+        updates = SGD(params=params).updates(loss)
+
+        # print('start: compile model')
+        train = theano.function(
+            inputs=[X, y, W],
+            outputs=[loss, w_star],
+            updates=updates,
+            on_unused_input='ignore'
+        )
+        # print('end: compile model')
+
+        return train
+
+    def model_W_star(self, w_j):
+        X = T.matrix(name="X")
+        y = T.vector(name="y")
+        w_star = T.vector(name='w_star')
+        w_j = theano.shared(w_j, name="w_j")
+
+        first = self.lambd * ((w_j-w_star)**2).sum()/2
+        second = self.eta * (w_star ** 2).sum()/2
+
+        logit = T.dot(X, w_j)
+        p_1 = T.nnet.nnet.sigmoid(logit)
+        xent = T.nnet.nnet.binary_crossentropy(p_1, y)
+        third = xent.sum()
+
+        loss = first + second + third
+        params = [w_j]
+        updates = SGD(params=params).updates(loss)
+
+        # print('start: compile model')
+        train = theano.function(
+            inputs=[X, y, w_star],
+            outputs=[loss, w_j],
+            updates=updates,
+            on_unused_input='ignore'
+        )
+        # print('end: compile model')
 
         return train
 
     def learn(self, X, Y, training_epochs=10):
         train = self.model()
         for i in range(training_epochs):
-            loss, w_star, W_ = train(X, Y)
-            if i % (training_epochs / 100) == 1:
-                print('{}: loss:{}'.format(i, loss))
-        return w_star, W_
+            loss, w_star, W = train(X, Y)
+
+            # if i % (training_epochs / 100) == 0:
+            #     print('{}: loss:{}'.format(i, loss))
+
+        self.w_star = w_star
+        self.W = W
+        return w_star, W
+
+    def learn_w_star(self, X, Y, training_epochs=10):
+        train = self.model_w_star()
+        for i in range(training_epochs):
+            loss, w_star = train(X, Y, self.W)
+
+            # if i % (training_epochs / 100) == 0:
+            #     print('w{}: loss:{}'.format(i, loss))
+
+        self.w_star = w_star
+        return w_star
+
+    def learn_W_star(self, X, Y, training_epochs=10):
+        J, D = self.W.shape
+        N = X.shape[0]
+        W = np.zeros_like(self.W)
+        y = np.zeros(shape=N)
+        for j in range(J):
+            y = Y[N*j: N*(j+1)]
+            w_j = W[j, :]
+            train = self.model_W_star(w_j)
+            for i in range(training_epochs):
+                loss, w_j_new = train(X, y, self.w_star)
+                # if i % (training_epochs / 100) == 0:
+                # print('w_j{}: loss:{}'.format(i, loss))
+            W[j, :] = w_j_new
+
+        self.W = W
+        return W
 
 
 class Logistic_model(Model):

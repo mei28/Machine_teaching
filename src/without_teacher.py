@@ -32,7 +32,7 @@ class Without_teacher():
             scale=lambd,
             size=W.shape
         )
-    
+
     def learn(self, X, training_epochs=10, loops=10):
         """
         learn and update w_star and W
@@ -46,89 +46,16 @@ class Without_teacher():
         """
         N, D = X.shape
         J = self.W.shape[0]
+        Y = self.make_Y(self.W, X)
 
-        X_ = self.remake_X(X, J)
-        W_ = self.duplicate_W(self.W, N)
-        W_star_ = self.duplicate_W(self.W_star, N)
-        Y = self.makeY(W_, X_)
+        for i in range(training_epochs):
+            model = W_star_model(
+                self.w_star, self.W_star, self.eta, self.lambd)
+            self.w_star = model.learn_w_star(X, Y, training_epochs=loops)
+            self.W_star = model.learn_W_star(X, Y, training_epochs=loops)
+            # self.w_star, self.W_star = model.learn(X, Y, training_epochs=loops)
 
-        model = W_star_model(self.w_star, W_star_, self.eta, self.lambd)
-        w_star, W_ = model.learn(X_, Y, training_epochs)
-        W = self.resize_W(W_, N)
-
-        self.w_star, self.W_star = w_star, W
-        return w_star, W
-
-    def update_w_star(self, X, Y, W_, training_epochs=10):
-        """
-        update w_star
-
-        Parameters
-        ----------
-        X : numpy
-            shape = (J*N,D)
-        Y : numpy
-            shape = (J*N,)
-        W_ : numpy
-            shape = (J*N,D)
-        training_epochs : int, optional
-            training epochs, by default 10
-
-        Returns
-        -------
-        return w_star
-        """
-        model = W_star_model(self.w_star, self.eta, self.lambd, self.W)
-        self.w_star = model.learn_w_star(X, Y, W_, training_epochs)
-        return self.w_star
-
-    def update_W(self, X, Y, training_epochs=10):
-        """
-        update_W
-
-        Parameters
-        ----------
-        X : numpy
-            shape = (J*N,D)
-        Y : numpy
-            shape = (J*N,)
-        training_epochs : int, optional
-            training epochs, by default 10
-
-        Returns
-        -------
-        return self.W
-        """
-        model = W_star_model(self.w_star, self.eta, self.lambd, self.W_star)
-        self.W_star = model.learn_W(X, Y, training_epochs=training_epochs)
-        return self.W_star
-
-    def estimate_w_star(self, X, W, training_epochs=10):
-        """
-        estimate w_star from worker's ans
-
-        Parameters
-        ----------
-        X : pandas
-            shape = (N,D)
-        W : numpy
-            worker's model parameter
-        training_epochs : int, optional
-            training epochs, by default 10
-
-        Returns
-        -------
-
-        """
-        N, D = X.shape
-        J = W.shape[0]
-
-        Y = self.makeY(W.copy(), X.copy(deep=True))
-        W_ = self.duplicate_W(W.copy(), N)
-        X = self.remake_X(X.copy(deep=True), J)
-        model = W_star_model(self.min_w, self.eta, self.lambd, W_)
-
-        self.w_star = model.learn(X, Y, training_epochs)
+        return self.w_star, self.W_star
 
     def duplicate_W(self, W, N):
         """
@@ -154,30 +81,15 @@ class Without_teacher():
                 W_[N*j+n] = tmp
         return W_
 
-    def makeY(self, W, X_):
-        """ make worker’s answer
-
-        Parameters
-        ----------
-        W : numpy
-            shape = (J,D)
-        X_ : pandas
-            shape = (J*N,D)
-
-        Returns
-        -------
-        numpy
-            shape = (N*J,)
-        """
+    def make_Y(self, W, X):
         J, D = W.shape
-        N = X_.shape[0]
-        Y = np.zeros((N))
+        N = X.shape[0]
+        Y = np.zeros(shape=J*N)
 
-        for i in range(N):
-            logit = np.dot(W[i, :], X_[i, :])
-            p_1 = 1/(1+np.exp(-logit))
-            Y[i] = np.random.choice(2, p=[1 - p_1, p_1])
-
+        logit = np.dot(W, X.T).flatten()
+        p_1_list = 1 / (1 + np.exp(-logit))
+        for i, p_1 in enumerate(p_1_list):
+            Y[i] = np.random.choice(2, p=[1-p_1, p_1])
         return Y
 
     def remake_X(self, X, J):
