@@ -107,7 +107,7 @@ def return_argmin_index(X):
 
 def predict(X, y, w):
     logit = np.dot(X, w)
-    pred_y = T.nnet.sigmoid(logit).eval()
+    pred_y = 1/(1+np.exp(-logit))
     # pred_y = [1 if i > 0.5 else 0 for i in pred_y]
     return(roc_auc_score(y, pred_y))
     print(roc_auc_score(y, pred_y))

@@ -5,6 +5,7 @@ import pandas as pd
 from load_data import read_W
 from model import *
 from omniscient_teacher import Omniscient
+from utils import *
 
 
 class Without_teacher():
@@ -34,21 +35,28 @@ class Without_teacher():
         )
 
     def learn(self, X, training_epochs=10, loops=10):
-        """
-        learn and update w_star and W
+        """update w_star and W_star
 
         Parameters
         ----------
         X : pandas
             shape = (N,D)
         training_epochs : int, optional
-            training epochs, by default 10
+            the number of all training epochs, by default 10
+        loops : int, optional
+            the number of each optimization epochs, by default 10
+
+        Returns
+        -------
+        self.w_star and self.W_star
+            [description]
         """
         N, D = X.shape
         J = self.W.shape[0]
         Y = self.make_Y(self.W, X)
 
         for i in range(training_epochs):
+            print('{:>4}: {}'.format(i, rmse_W(self.W, self.W_star)))
             model = W_star_model(
                 self.w_star, self.W_star, self.eta, self.lambd)
             self.w_star = model.learn_w_star(X, Y, training_epochs=loops)
@@ -56,6 +64,32 @@ class Without_teacher():
             # self.w_star, self.W_star = model.learn(X, Y, training_epochs=loops)
 
         return self.w_star, self.W_star
+
+    def make_Y(self, W, X):
+        """
+        make Y which is worker's answers
+
+        Parameters
+        ----------
+        W : numpy
+            shape = (J,D), worker's model parameter matrix
+        X : pandas
+            shape = (N,D), feature matrix
+
+        Returns
+        -------
+        numpy   
+            shape = (J,N) →　(J*N)
+        """
+        J, D = W.shape
+        N = X.shape[0]
+        Y = np.zeros(shape=J*N)
+
+        logit = np.dot(W, X.T).flatten()
+        p_1_list = 1 / (1 + np.exp(-logit))
+        for i, p_1 in enumerate(p_1_list):
+            Y[i] = np.random.choice(2, p=[1-p_1, p_1])
+        return Y
 
     def duplicate_W(self, W, N):
         """
@@ -80,17 +114,6 @@ class Without_teacher():
             for n in range(N):
                 W_[N*j+n] = tmp
         return W_
-
-    def make_Y(self, W, X):
-        J, D = W.shape
-        N = X.shape[0]
-        Y = np.zeros(shape=J*N)
-
-        logit = np.dot(W, X.T).flatten()
-        p_1_list = 1 / (1 + np.exp(-logit))
-        for i, p_1 in enumerate(p_1_list):
-            Y[i] = np.random.choice(2, p=[1-p_1, p_1])
-        return Y
 
     def remake_X(self, X, J):
         """remake X (N,D) -> (N*J,D)
