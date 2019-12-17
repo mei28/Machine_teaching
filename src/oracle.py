@@ -54,7 +54,7 @@ class Oracle():
         # self.min_w = logistic_model.w
         # return self.min_w
 
-        lr = LogisticRegression(fit_intercept=False)
+        lr = LogisticRegression(solver='lbfgs', fit_intercept=False)
         lr.fit(X, y)
         self.min_w = lr.coef_[0]
         return lr.coef_[0]
