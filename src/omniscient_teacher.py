@@ -1,9 +1,9 @@
 import import_path
 import numpy as np
 import pandas as pd
-from model import *
-from oracle import Oracle
 from teacher import Teacher
+import theano
+import theano.tensor as T
 
 
 class Omniscient(Teacher):
@@ -29,7 +29,7 @@ class Omniscient(Teacher):
         w_ = T.vector(name='w_')
         w_t = T.vector(name='w_t')
 
-        first = (self.alpha ** 2) * (grad_loss ** 2).sum(axis=1)
+        first = (self.alpha ** 2) * (grad_loss ** 2).sum()
         second = -2 * self.alpha * (T.dot(grad_loss, w_t - w_))
         loss = first + second
         function = theano.function(
@@ -46,7 +46,7 @@ class Omniscient(Teacher):
         Parameters
         ----------
         X : pandas
-            text book pook
+            text book pool
         y : pandas
             goal
         w_t : numpy
@@ -68,3 +68,5 @@ class Omniscient(Teacher):
             self.drop_textbook(X, y, index)
 
         return X_t, y_t, index
+
+    

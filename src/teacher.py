@@ -139,3 +139,10 @@ class Teacher():
                 y.drop(index, inplace=True)
             X.reset_index(drop=True, inplace=True)
             y.reset_index(drop=True, inplace=True)
+
+    def update_w_j(self, X_t, y_t, w_j):
+        grad_loss = self.grad_loss_function()
+        grad_loss_ = grad_loss(X_t, y_t, w_j)[0]
+
+        w_j = w_j - self.alpha * grad_loss_
+        return w_j
