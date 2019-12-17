@@ -5,6 +5,8 @@ import numpy as np
 import theano
 import theano.tensor as T
 from collections import OrderedDict
+from sklearn.linear_model import LogisticRegression
+
 # theano.config.gcc.cxxflags = "-Wno-c++11-narrowing"
 
 
@@ -24,7 +26,7 @@ class Oracle():
         self.eta = eta
         self.lambd = lambd
 
-    def estimate_min_w(self, X, y, training_epochs=10):
+    def estimate_min_w(self, X, y):
         """
         estimate true_w
 
@@ -42,15 +44,20 @@ class Oracle():
         numpy 
             true model parameter
         """
-        w_init = np.random.normal(
-            loc=0,
-            scale=self.eta,
-            size=X.shape[1]
-        )
-        logistic_model = Logistic_model(w_init, self.eta)
-        logistic_model.learn(X, y, training_epochs)
-        self.min_w = logistic_model.w
-        return self.min_w
+        # w_init = np.random.normal(
+        #     loc=0,
+        #     scale=self.eta,
+        #     size=X.shape[1]
+        # )
+        # logistic_model = Logistic_model(w_init, self.eta)
+        # logistic_model.learn(X, y, training_epochs)
+        # self.min_w = logistic_model.w
+        # return self.min_w
+
+        lr = LogisticRegression(solver='lbfgs', fit_intercept=False)
+        lr.fit(X, y)
+        self.min_w = lr.coef_[0]
+        return lr.coef_[0]
 
     def make_W_init(self, J):
         """make first W
@@ -73,4 +80,5 @@ class Oracle():
                 scale=self.lambd,
                 size=self.min_w.shape[0]
             )
+            # W[j, :] = self.min_w
         return W
