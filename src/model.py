@@ -91,7 +91,7 @@ class W_star_model():
         logit = T.flatten(T.dot(W, X.T))
         p_1 = T.nnet.nnet.sigmoid(logit)
         xent = T.nnet.nnet.binary_crossentropy(p_1, y)
-        third = xent.mean()
+        third = xent.sum()
 
         loss = first + second + third
         params = [w_star, W]
@@ -128,7 +128,7 @@ class W_star_model():
         logit = T.flatten(T.dot(W, X.T))
         p_1 = T.nnet.nnet.sigmoid(logit)
         xent = T.nnet.nnet.binary_crossentropy(p_1, y)
-        third = xent.mean()
+        third = xent.sum()
 
         loss = first + second + third
         params = [w_star]
@@ -170,7 +170,7 @@ class W_star_model():
         logit = T.dot(X, w_j)
         p_1 = T.nnet.nnet.sigmoid(logit)
         xent = T.nnet.nnet.binary_crossentropy(p_1, y)
-        third = xent.mean()
+        third = xent.sum()
 
         loss = first + second + third
         params = [w_j]
