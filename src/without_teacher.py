@@ -10,6 +10,24 @@ from utils import *
 
 class Without_teacher():
     def __init__(self, w, W, N, eta=0.01, lambd=0.01, alpha=0.01):
+        """
+        constructor
+
+        Parameters
+        ----------
+        w : numpy
+            w_star
+        W : numpy
+            true workers' model parameters
+        N : int
+            the number of text book pool
+        eta : float, optional
+            true w parameter, by default 0.01
+        lambd : float, optional
+            W's parameter, by default 0.01
+        alpha : float, optional
+            learning rate, by default 0.01
+        """
         self.eta = eta
         self.lambd = lambd
         self.w_star = w
@@ -67,7 +85,7 @@ class Without_teacher():
 
         Returns
         -------
-        numpy   
+        numpy
             shape = (J,N) →　(J*N)
         """
         J, D = W.shape
@@ -138,7 +156,7 @@ class Without_teacher():
 
         Returns
         -------
-        numpy 
+        numpy
             shape = (J,D)
         """
         J = int(W_.shape[0] / N)
@@ -171,46 +189,74 @@ class Without_teacher():
 
         return y
 
-    def return_textbook_omni(self, X, y, w_j, drop=True):
+    def return_textbook_omni(self, X, y, w_j):
+        """
+        return textbook
+
+        Parameters
+        ----------
+        X : pandas
+            text book pool
+        y : pandas
+            True label
+        w_j : numpy
+            worker's parameter
+
+        Returns
+        -------
+        return X_t, y_t, index
+        """
         omt = Omniscient(self.w_star, alpha=self.alpha)
-        X_t, y_t, index = omt.return_textbook(X, y, w_j, self.w_star, drop)
+        X_t, y_t, index = omt.return_textbook(X, y, w_j, self.w_star)
         return X_t, y_t, index
 
     def update_wj_by_omni(self, X_t, y_t, w_j):
+        """
+        to update w_j parameter by text book
+
+        Parameters
+        ----------
+        X_t : pandas
+            a text book
+        y_t : pandas
+            a true label
+        w_j : numpy
+            worker's parameter
+
+        Returns
+        -------
+            return updated w_j
+        """
         omt = Omniscient(self.w_star, alpha=self.alpha)
         w_j = omt.update_w_j(X_t, y_t, w_j)
         return w_j
 
-    def show_textbook(self, X, y, N, drop=True):
+    def show_textbook(self, X, y, N):
+        """
+        show text book for each worker. and update their parameter
+
+        Parameters
+        ----------
+        X : pandas 
+            textbook pool
+        y : pandas 
+            true label
+        N : int
+            the number of textbook to show
+        """
         J, D = self.W.shape
-        X_pool = []
-        y_pool = []
         for j in range(J):
-            X_copy = X.copy()
-            y_copy = y.copy()
+            w_j_star = self.W_star[j, :]
             for n in range(N):
-                w_j_star = self.W_star[j, :]
+                mask = self.mask[j]
+                X_j, y_j = X[mask], y[mask]
+
                 X_t, y_t, index = self.return_textbook_omni(
-                    X_copy, y_copy, w_j_star, drop)
+                    X_j, y_j, w_j_star)
+
+                self.mask[j, index] = False
 
                 w_j = self.W[j, :]
                 w_j_new = self.update_wj_by_omni(X_t, y_t, w_j)
                 # print('{}: {}'.format(j, index))
-                # print(w_j_new)
                 self.W[j, :] = w_j_new
-            X_pool.append(X_copy)
-            y_pool.append(y_copy)
-
-        return X_pool, y_pool
-
-    def rebuild_pool(self, X_pool, y_pool):
-        new_X = pd.DataFrame(X_pool[0])
-        new_y = pd.DataFrame(y_pool[0])
-        for x, y in zip(X_pool[1:], y_pool[1:]):
-            X_tmp = pd.concat([new_X, x])
-            y_tmp = pd.concat([new_y, y], axis=1)
-
-            new_X = X_tmp[X_tmp.duplicated()]
-            new_y = y_tmp[y_tmp.duplicated()]
-
-        return new_X, new_y
