@@ -66,12 +66,12 @@ def split_data(df, normalization=True):
     pandas
     return train ans test data frame
     """
-    X = df.drop('Spe', axis=1)
+    X = df.drop(df.columns[-1], axis=1)
     if normalization:
         ms = MinMaxScaler()
         X = ms.fit_transform(X)
         X = pd.DataFrame(X)
-    y = df['Spe']
+    y = df[df.columns[-1]]
     train_X, test_X, train_y, test_y = train_test_split(
         X, y, shuffle=True
     )
