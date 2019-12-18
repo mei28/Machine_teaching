@@ -9,20 +9,7 @@ from utils import *
 
 
 class Without_teacher():
-    def __init__(self, w, W, eta=0.01, lambd=0.01, alpha=0.01):
-        """[summary]
-
-        Parameters
-        ----------
-        min_w : [type]
-            [description]
-        eta : float, optional
-            [description], by default 0.01
-        lambd : float, optional
-            [description], by default 0.01
-        alpha : float, optional
-            [description], by default 0.01
-        """
+    def __init__(self, w, W, N, eta=0.01, lambd=0.01, alpha=0.01):
         self.eta = eta
         self.lambd = lambd
         self.w_star = w
@@ -33,6 +20,8 @@ class Without_teacher():
             scale=lambd,
             size=W.shape
         )
+        J, D = W.shape
+        self.mask = np.full((J, N), True, dtype=bool)
 
     def learn(self, X, training_epochs=10, loops=10):
         """update w_star and W_star
@@ -182,21 +171,46 @@ class Without_teacher():
 
         return y
 
-    def return_text_book_omni(self, X, y, W):
-        J, D = W.shape
+    def return_textbook_omni(self, X, y, w_j, drop=True):
+        omt = Omniscient(self.w_star, alpha=self.alpha)
+        X_t, y_t, index = omt.return_textbook(X, y, w_j, self.w_star, drop)
+        return X_t, y_t, index
 
-        om_teacher = Omniscient(self.w_star, alpha=self.alpha)
-        X_pool = np.zeros(shape=(J, D))
-        y_pool = np.zeros(shape=(J))
-        index_set = set()
+    def update_wj_by_omni(self, X_t, y_t, w_j):
+        omt = Omniscient(self.w_star, alpha=self.alpha)
+        w_j = omt.update_w_j(X_t, y_t, w_j)
+        return w_j
+
+    def show_textbook(self, X, y, N, drop=True):
+        J, D = self.W.shape
+        X_pool = []
+        y_pool = []
         for j in range(J):
-            w_j = W[j, :]
-            X_t, y_t, index = om_teacher.return_textbook(
-                X, y, w_j, self.w_star, drop=True)
-            X_pool[j, :] = X_t
-            y_pool[j] = y_t
-            index_set.add(index)
-        # om_teacher.drop_textbook(X, y, index_set)
-        X_pool = pd.DataFrame(X_pool)
-        y_pool = pd.DataFrame(y_pool)
-        return X_pool, y_pool, index_set
+            X_copy = X.copy()
+            y_copy = y.copy()
+            for n in range(N):
+                w_j_star = self.W_star[j, :]
+                X_t, y_t, index = self.return_textbook_omni(
+                    X_copy, y_copy, w_j_star, drop)
+
+                w_j = self.W[j, :]
+                w_j_new = self.update_wj_by_omni(X_t, y_t, w_j)
+                # print('{}: {}'.format(j, index))
+                # print(w_j_new)
+                self.W[j, :] = w_j_new
+            X_pool.append(X_copy)
+            y_pool.append(y_copy)
+
+        return X_pool, y_pool
+
+    def rebuild_pool(self, X_pool, y_pool):
+        new_X = pd.DataFrame(X_pool[0])
+        new_y = pd.DataFrame(y_pool[0])
+        for x, y in zip(X_pool[1:], y_pool[1:]):
+            X_tmp = pd.concat([new_X, x])
+            y_tmp = pd.concat([new_y, y], axis=1)
+
+            new_X = X_tmp[X_tmp.duplicated()]
+            new_y = y_tmp[y_tmp.duplicated()]
+
+        return new_X, new_y

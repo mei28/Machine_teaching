@@ -146,3 +146,15 @@ class Teacher():
 
         w_j = w_j - self.alpha * grad_loss_
         return w_j
+
+    def rebuild_pool(self, X_pool, y_pool):
+        new_X = pd.DataFrame(X_pool[0])
+        new_y = pd.DataFrame(y_pool[0])
+        for x, y in zip(X_pool[1:], y_pool[1:]):
+            X_tmp = pd.concat([new_X, x])
+            y_tmp = pd.concat([new_y, y])
+
+            new_X = X_tmp[X_tmp.duplicated()]
+            new_y = y_tmp[y_tmp.duplicated()]
+
+        return new_X, new_y
