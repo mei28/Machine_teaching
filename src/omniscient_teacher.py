@@ -39,7 +39,7 @@ class Omniscient(Teacher):
         )
         return function
 
-    def return_textbook(self, X, y, w_t, w_, drop=True):
+    def return_textbook(self, X, y, w_t, w_):
         """
         return text book
 
@@ -64,9 +64,5 @@ class Omniscient(Teacher):
         index = self.return_argmin_index(loss_matrix)
         # print('omni: {}'.format(index))
         X_t, y_t = X.iloc[index], y.iloc[index]
-        if drop:
-            self.drop_textbook(X, y, index)
 
         return X_t, y_t, index
-
-    

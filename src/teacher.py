@@ -115,46 +115,9 @@ class Teacher():
         index = np.random.choice(index_list)
         return index
 
-    def drop_textbook(self, X, y, index_set):
-        """
-        drop text book from textbool pool
-
-        Parameters
-        ----------
-        X : pandas
-            text book pool
-        y : pandas
-            goap
-        index : int
-            index which is dropped
-        """
-        if type(index_set) is np.int64:
-            X.drop(index_set, inplace=True)
-            y.drop(index_set, inplace=True)
-            X.reset_index(drop=True, inplace=True)
-            y.reset_index(drop=True, inplace=True)
-        else:
-            for index in index_set:
-                X.drop(index, inplace=True)
-                y.drop(index, inplace=True)
-            X.reset_index(drop=True, inplace=True)
-            y.reset_index(drop=True, inplace=True)
-
     def update_w_j(self, X_t, y_t, w_j):
         grad_loss = self.grad_loss_function()
         grad_loss_ = grad_loss(X_t, y_t, w_j)[0]
 
         w_j = w_j - self.alpha * grad_loss_
         return w_j
-
-    def rebuild_pool(self, X_pool, y_pool):
-        new_X = pd.DataFrame(X_pool[0])
-        new_y = pd.DataFrame(y_pool[0])
-        for x, y in zip(X_pool[1:], y_pool[1:]):
-            X_tmp = pd.concat([new_X, x])
-            y_tmp = pd.concat([new_y, y])
-
-            new_X = X_tmp[X_tmp.duplicated()]
-            new_y = y_tmp[y_tmp.duplicated()]
-
-        return new_X, new_y
