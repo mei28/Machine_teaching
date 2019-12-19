@@ -4,6 +4,7 @@ import numpy as np
 import theano
 import theano.tensor as T
 from sklearn.metrics import roc_auc_score
+import scipy.stats as stats
 
 
 def make_grad_loss_matrix(X, y, w):
@@ -15,8 +16,8 @@ def make_grad_loss_matrix(X, y, w):
         feature matrix
     y : pandas vector
         predict
-    w : numpy 
-        model parameter    
+    w : numpy
+        model parameter
     Returns
     -------
     numpy matrix
@@ -61,7 +62,7 @@ def grad_loss_function():
 
 def loss_function():
     """
-    return loss function 
+    return loss function
 
     Returns
     -------
@@ -137,3 +138,23 @@ def return_copy_dateset(X, y):
 def rmse_W(W, W_star, axis=None):
     ans = np.sqrt(((W - W_star)**2).mean(axis))
     return ans
+
+
+def return_mode(y):
+    return stats.mode(y)[0]
+
+
+def return_answer_matrix(W, X, J):
+    N = X.shape[0]
+    W = W.copy()
+
+    Y = np.zeros(shape=(N, J))
+
+    for n in range(N):
+        X_t = X.iloc[n, :]
+        for j in range(J):
+            w_j = W[j, :]
+            logit = np.dot(X_t, w_j)
+            p_1 = 1 / (1 + np.exp(-logit))
+            Y[n, j] = np.random.choice(2, p=[1 - p_1, p_1])
+    return Y
