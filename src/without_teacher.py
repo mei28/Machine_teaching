@@ -228,7 +228,7 @@ class Without_teacher():
         w_j = omt.update_w_j(X_t, y_t, w_j)
         return w_j
 
-    def show_textbook(self, X, y, N=1):
+    def show_textbook(self, X, N=1):
         """
         show text book for each worker. and update their parameter
 
@@ -242,6 +242,10 @@ class Without_teacher():
             the number of textbook to show
         """
         J, D = self.J, self.D
+
+        y = self.decision_Y_by_mix(X, self.W)
+        # y = self.decision_Y_by_majority(X, self.W)
+        # y = self.decision_Y_by_prob(X, self.W)
         for j in range(J):
             w_j_star = self.W_star[j, :]
             for n in range(N):
@@ -258,7 +262,7 @@ class Without_teacher():
                 # print('{}: {}'.format(j, index))
                 self.W[j, :] = w_j_new
 
-    def decision_Y_by_majority(self, X):
+    def decision_Y_by_majority(self, X, W):
         """
         return label from worker decision
 
@@ -274,7 +278,6 @@ class Without_teacher():
         """
         N = X.shape[0]
         J = self.J
-        W = self.W.copy()
 
         y = np.zeros(shape=(N))
         Y = return_answer_matrix(W, X, J=J)
@@ -285,10 +288,9 @@ class Without_teacher():
         y = pd.Series(y)
         return y
 
-    def decision_Y_by_random(self, X):
+    def decision_Y_by_prob(self, X, W):
         N = X.shape[0]
         J = self.J
-        W = self.W.copy()
 
         y = np.zeros(shape=N)
         Y = return_answer_matrix(W, X, J)
@@ -298,10 +300,9 @@ class Without_teacher():
         y = pd.Series(y)
         return y
 
-    def decision_Y_by_mix(self, X):
+    def decision_Y_by_mix(self, X, W):
         N = X.shape[0]
         J = self.J
-        W = self.W.copy()
 
         y = np.zeros(shape=N)
         Y = return_answer_matrix(W, X, J)
@@ -313,5 +314,5 @@ class Without_teacher():
                 y[i] = np.random.choice(tmp)
             else:
                 y[i] = return_mode(tmp)
-
-        return y, Y
+        y = pd.Series(y)
+        return y

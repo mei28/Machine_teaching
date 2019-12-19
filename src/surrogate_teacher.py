@@ -32,7 +32,7 @@ class Surrogate(Teacher):
         )
         return t
 
-    def return_textbook(self, X, y, w_t, w_, drop=True):
+    def return_textbook(self, X, y, w_t, w_):
         """
         return text book
 
