@@ -257,3 +257,61 @@ class Without_teacher():
                 w_j_new = self.update_wj_by_omni(X_t, y_t, w_j)
                 # print('{}: {}'.format(j, index))
                 self.W[j, :] = w_j_new
+
+    def decision_Y_by_majority(self, X):
+        """
+        return label from worker decision
+
+        Parameters
+        ----------
+        X : pandas
+            text book pool
+
+        Returns
+        -------
+        y pandas
+            decision by majority
+        """
+        N = X.shape[0]
+        J = self.J
+        W = self.W.copy()
+
+        y = np.zeros(shape=(N))
+        Y = return_answer_matrix(W, X, J=J)
+
+        for n in range(N):
+            Y_n = Y[n, :]
+            y[n] = return_mode(Y_n)
+        y = pd.Series(y)
+        return y
+
+    def decision_Y_by_random(self, X):
+        N = X.shape[0]
+        J = self.J
+        W = self.W.copy()
+
+        y = np.zeros(shape=N)
+        Y = return_answer_matrix(W, X, J)
+
+        for i, tmp in enumerate(Y):
+            y[i] = np.random.choice(tmp)
+        y = pd.Series(y)
+        return y
+
+    def decision_Y_by_mix(self, X):
+        N = X.shape[0]
+        J = self.J
+        W = self.W.copy()
+
+        y = np.zeros(shape=N)
+        Y = return_answer_matrix(W, X, J)
+
+        threshhold = 0.2
+        for i, tmp in enumerate(Y):
+            sum_num = tmp.sum()
+            if J * threshhold < sum_num and sum_num < (1 - threshhold) * J:
+                y[i] = np.random.choice(tmp)
+            else:
+                y[i] = return_mode(tmp)
+
+        return y, Y
