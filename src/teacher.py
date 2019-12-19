@@ -5,7 +5,7 @@ import theano.tensor as T
 
 
 class Teacher():
-    def __init__(self, min_w, alpha=0.01):
+    def __init__(self, min_w, W, N, alpha=0.01):
         """
         teacher base class
 
@@ -13,12 +13,19 @@ class Teacher():
         ----------
         min_w : numpy
             true model parameter
+        W : numpy
+            worker's parameter
+        N : int
+            the number of text book pool
         alpha : float, optional
             learning rate, by default 0.01
         """
         super().__init__()
         self.min_w = min_w.copy()
+        self.W = W.copy()
         self.alpha = alpha
+        J, D = W.shape
+        self.mask = np.full((J, N), True, dtype=bool)
 
     def make_grad_loss_matrix(self, X, y, w):
         """return grad loss matrix
@@ -44,6 +51,9 @@ class Teacher():
             grad_loss_matrix[i] = a
 
         return grad_loss_matrix
+
+    def return_textbook(self):
+        pass
 
     def grad_loss_function(self):
         """
@@ -116,8 +126,38 @@ class Teacher():
         return index
 
     def update_w_j(self, X_t, y_t, w_j):
+        """
+        update w_j
+
+        Parameters
+        ----------
+        X_t : pandas
+            text book
+        y_t : pandas
+            true label
+        w_j : numpy
+            worker's parameter
+
+        Returns
+        -------
+            return updated w_j
+        """
         grad_loss = self.grad_loss_function()
         grad_loss_ = grad_loss(X_t, y_t, w_j)[0]
 
         w_j = w_j - self.alpha * grad_loss_
         return w_j
+
+    def show_textbook(self, X, y, N=1):
+        J, D = self.W.shape
+        for j in range(J):
+            w_j = self.W[j, :]
+            for n in range(N):
+                mask = self.mask[j]
+                X_j, y_j = X[mask], y[mask]
+
+                X_t, y_t, index = self.return_textbook(
+                    X_j, y_j, w_j, self.min_w)
+                self.mask[j, index] = False
+                w_j_new = self.update_w_j(X_t, y_t, w_j)
+                self.W[j, :] = w_j_new

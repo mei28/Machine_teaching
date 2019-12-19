@@ -7,8 +7,8 @@ import theano.tensor as T
 
 
 class Omniscient(Teacher):
-    def __init__(self, min_w, alpha=0.01):
-        super().__init__(min_w, alpha=alpha)
+    def __init__(self, min_w, W, N, alpha=0.01):
+        super().__init__(min_w, W, N, alpha=alpha)
 
     def make_loss_function(self):
         """
