@@ -38,11 +38,12 @@ class Without_teacher():
             scale=lambd,
             size=W.shape
         )
-        J, D = W.shape
-        self.mask = np.full((J, N), True, dtype=bool)
+        self.N = N
+        self.J, self.D = W.shape
+        self.mask = np.full((self.J, self.N), True, dtype=bool)
 
     def learn(self, X, training_epochs=10, loops=10):
-        """update w_star and W_star
+        """estimate w_star and W_star
 
         Parameters
         ----------
@@ -58,12 +59,10 @@ class Without_teacher():
         self.w_star and self.W_star
             [description]
         """
-        N, D = X.shape
-        J = self.W.shape[0]
         Y = self.make_Y(self.W, X)
 
         for i in range(training_epochs):
-            print('{:>4}: {}'.format(i, rmse_W(self.W, self.W_star)))
+            # print('{:>4}: {}'.format(i, rmse_W(self.W, self.W_star)))
             model = W_star_model(
                 self.w_star, self.W_star, self.eta, self.lambd)
             self.w_star = model.learn_w_star(X, Y, training_epochs=loops)
@@ -88,9 +87,7 @@ class Without_teacher():
         numpy
             shape = (J,N) →　(J*N)
         """
-        J, D = W.shape
-        N = X.shape[0]
-        Y = np.zeros(shape=J*N)
+        Y = np.zeros(shape=self.J*self.N)
 
         logit = np.dot(W, X.T).flatten()
         p_1_list = 1 / (1 + np.exp(-logit))
@@ -206,7 +203,7 @@ class Without_teacher():
         -------
         return X_t, y_t, index
         """
-        omt = Omniscient(self.w_star, alpha=self.alpha)
+        omt = Omniscient(self.w_star, self.W_star, N=self.N, alpha=self.alpha)
         X_t, y_t, index = omt.return_textbook(X, y, w_j, self.w_star)
         return X_t, y_t, index
 
@@ -227,11 +224,11 @@ class Without_teacher():
         -------
             return updated w_j
         """
-        omt = Omniscient(self.w_star, alpha=self.alpha)
+        omt = Omniscient(self.w_star, self.W_star, N=self.N, alpha=self.alpha)
         w_j = omt.update_w_j(X_t, y_t, w_j)
         return w_j
 
-    def show_textbook(self, X, y, N):
+    def show_textbook(self, X, y, N=1):
         """
         show text book for each worker. and update their parameter
 
@@ -244,7 +241,7 @@ class Without_teacher():
         N : int
             the number of textbook to show
         """
-        J, D = self.W.shape
+        J, D = self.J, self.D
         for j in range(J):
             w_j_star = self.W_star[j, :]
             for n in range(N):
