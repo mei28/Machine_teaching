@@ -65,4 +65,4 @@ class Omniscient(Teacher):
         # print('omni: {}'.format(index))
         X_t, y_t = X.iloc[index], y.iloc[index]
 
-        return X_t, y_t, index
+        return X_t, y_t

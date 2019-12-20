@@ -122,6 +122,8 @@ class Teacher():
         index_list = np.where(X == np.min(X))[0]
         # if len(index_list) > 1:
         #     print('random choiced')
+        # if len(index_list) < 1:
+        #     print('Not exist')
         index = np.random.choice(index_list)
         return index
 
@@ -156,8 +158,9 @@ class Teacher():
                 mask = self.mask[j]
                 X_j, y_j = X[mask], y[mask]
 
-                X_t, y_t, index = self.return_textbook(
+                X_t, y_t = self.return_textbook(
                     X_j, y_j, w_j, self.min_w)
+                index = np.where(X == X_t)[0][0]
                 self.mask[j, index] = False
                 w_j_new = self.update_w_j(X_t, y_t, w_j)
                 self.W[j, :] = w_j_new

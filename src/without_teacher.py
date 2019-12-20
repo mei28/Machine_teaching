@@ -204,8 +204,8 @@ class Without_teacher():
         return X_t, y_t, index
         """
         omt = Omniscient(self.w_star, self.W_star, N=self.N, alpha=self.alpha)
-        X_t, y_t, index = omt.return_textbook(X, y, w_j, self.w_star)
-        return X_t, y_t, index
+        X_t, y_t = omt.return_textbook(X, y, w_j, self.w_star)
+        return X_t, y_t
 
     def update_wj_by_omni(self, X_t, y_t, w_j):
         """
@@ -252,9 +252,9 @@ class Without_teacher():
                 mask = self.mask[j]
                 X_j, y_j = X[mask], y[mask]
 
-                X_t, y_t, index = self.return_textbook_omni(
+                X_t, y_t = self.return_textbook_omni(
                     X_j, y_j, w_j_star)
-
+                index = np.where(X == X_t)[0][0]
                 self.mask[j, index] = False
 
                 w_j = self.W[j, :]
