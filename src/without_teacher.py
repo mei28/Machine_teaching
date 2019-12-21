@@ -95,75 +95,6 @@ class Without_teacher():
             Y[i] = np.random.choice(2, p=[1-p_1, p_1])
         return Y
 
-    def duplicate_W(self, W, N):
-        """
-        duplicate W (J,D) -> (J*N,D)
-
-        Parameters
-        ----------
-        W : numpy
-            shape = (J,D)
-        N : int
-            The number of questions
-
-        Returns
-        -------
-        W_
-            shape = (J*N,D)
-        """
-        J, D = W.shape
-        W_ = np.zeros((N * J, D))
-        for j in range(J):
-            tmp = W[j].copy()
-            for n in range(N):
-                W_[N*j+n] = tmp
-        return W_
-
-    def remake_X(self, X, J):
-        """remake X (N,D) -> (N*J,D)
-
-        Parameters
-        ----------
-        X : pandas
-            shape = (N,D), feature matrix
-        J : int
-            The number of workers
-
-        Returns
-        -------
-        X_
-            shape = (N*J,D)
-        """
-        N, D = X.shape
-        X_ = np.zeros((N * J, D))
-        for i in range(N * J):
-            X_[i, :] = X.iloc[i % N]
-        return X_
-
-    def resize_W(self, W_, N):
-        """
-        resize shape (J*N,D) → (J,D)
-
-        Parameters
-        ----------
-        W_ : numpy
-            shape = (J*N,D)
-        N : int
-            the number of problem
-
-        Returns
-        -------
-        numpy
-            shape = (J,D)
-        """
-        J = int(W_.shape[0] / N)
-        D = W_.shape[1]
-        W = np.zeros((J, D))
-        for j in range(J):
-            W[j] = W_[N * j:N*(j+1)].mean()
-
-        return W
-
     def predict_y(self, X, w):
         """
         return predicted y
@@ -228,7 +159,7 @@ class Without_teacher():
         w_j = omt.update_w_j(X_t, y_t, w_j)
         return w_j
 
-    def show_textbook(self, X, N=1):
+    def show_textbook(self, X, y=None, N=1, option='None'):
         """
         show text book for each worker. and update their parameter
 
@@ -243,9 +174,19 @@ class Without_teacher():
         """
         J, D = self.J, self.D
 
-        y = self.decision_Y_by_mix(X, self.W)
-        # y = self.decision_Y_by_majority(X, self.W)
-        # y = self.decision_Y_by_prob(X, self.W)
+        if y is not None:
+            y = y
+        else:
+            if option == 'mix':
+                y = self.decision_Y_by_mix(X, self.W_star)
+            elif option == 'majority':
+                y = self.decision_Y_by_majority(X, self.W_star)
+            elif option == 'prob':
+                y = self.decision_Y_by_prob(X, self.W_star)
+            else:
+                print('default: mix')
+                y = self.decision_Y_by_mix(X, self.W_star)
+
         for j in range(J):
             w_j_star = self.W_star[j, :]
             for n in range(N):
