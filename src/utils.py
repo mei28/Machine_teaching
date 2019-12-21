@@ -127,7 +127,7 @@ def predict_by_W(X, y, W):
 
 
 def write_np2csv(X, path):
-    np.savetxt('output/{}.csv'.format(path), X, delimiter=',')
+    np.savetxt(path, X, delimiter=',')
 
 
 def return_copy_dateset(X, y):
@@ -137,6 +137,11 @@ def return_copy_dateset(X, y):
 
 def rmse_W(W, W_star, axis=None):
     ans = np.sqrt(((W - W_star)**2).mean(axis))
+    return ans
+
+
+def rmse_w(min_w, w_star):
+    ans = np.sqrt((min_w - w_star) ** 2).mean()
     return ans
 
 
