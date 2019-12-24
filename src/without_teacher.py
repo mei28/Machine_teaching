@@ -178,14 +178,14 @@ class Without_teacher():
             y = y
         else:
             if option == 'mix':
-                y = self.decision_Y_by_mix(X, self.W_star)
+                y = self.decision_Y_by_mix(X, self.W)
             elif option == 'majority':
-                y = self.decision_Y_by_majority(X, self.W_star)
+                y = self.decision_Y_by_majority(X, self.W)
             elif option == 'prob':
-                y = self.decision_Y_by_prob(X, self.W_star)
+                y = self.decision_Y_by_prob(X, self.W)
             else:
-                print('default: mix')
-                y = self.decision_Y_by_mix(X, self.W_star)
+                print('default: majority')
+                y = self.decision_Y_by_majority(X, self.W)
 
         for j in range(J):
             w_j_star = self.W_star[j, :]
