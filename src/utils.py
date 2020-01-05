@@ -163,3 +163,11 @@ def return_answer_matrix(W, X, J):
             p_1 = 1 / (1 + np.exp(-logit))
             Y[n, j] = np.random.choice(2, p=[1 - p_1, p_1])
     return Y
+
+
+def make_random_mask(X, n):
+    N, D = X.shape
+    mask = np.full(N, False, dtype=bool)
+    mask_index = np.random.choice(range(N), size=n, replace=False)
+    new_X = X.copy().iloc[mask_index]
+    return new_X, n
