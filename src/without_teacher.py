@@ -87,7 +87,8 @@ class Without_teacher():
         numpy
             shape = (J,N) →　(J*N)
         """
-        Y = np.zeros(shape=self.J*self.N)
+        N, D = X.shape
+        Y = np.zeros(shape=self.J*N)
 
         logit = np.dot(W, X.T).flatten()
         p_1_list = 1 / (1 + np.exp(-logit))
@@ -106,15 +107,15 @@ class Without_teacher():
 
         Returns
         -------
-        return predicted y numpy
+        return predicted y pandas
         """
         N, D = X.shape
         y = np.zeros(N)
         for n in range(N):
             logit = np.dot(X.iloc[n], w)
             p_1 = 1 / (1 + np.exp(-logit))
-            y[n] = np.random.choice(2, p=[1 - p_1, p_1])
-
+            y[n] = 1 if p_1 > 0.5 else 0
+        y = pd.Series(y)
         return y
 
     def return_textbook_omni(self, X, y, w_j):
@@ -134,7 +135,8 @@ class Without_teacher():
         -------
         return X_t, y_t, index
         """
-        omt = Omniscient(self.w_star, self.W_star, N=self.N, alpha=self.alpha)
+        N, D = X.shape
+        omt = Omniscient(self.w_star, self.W_star, N=N, alpha=self.alpha)
         X_t, y_t = omt.return_textbook(X, y, w_j, self.w_star)
         return X_t, y_t
 
@@ -175,17 +177,21 @@ class Without_teacher():
         J, D = self.J, self.D
 
         if y is not None:
+            # print('use y')
             y = y
         else:
             if option == 'mix':
-                y = self.decision_Y_by_mix(X, self.W)
+                # print('use mix')
+                y = self.decision_Y_by_mix(X, self.W_star)
             elif option == 'majority':
-                y = self.decision_Y_by_majority(X, self.W)
+                # print('use majority')
+                y = self.decision_Y_by_majority(X, self.W_star)
             elif option == 'prob':
-                y = self.decision_Y_by_prob(X, self.W)
+                # print('use prob')
+                y = self.decision_Y_by_prob(X, self.W_star)
             else:
-                print('default: majority')
-                y = self.decision_Y_by_majority(X, self.W)
+                # print('default: w_star')
+                y = self.predict_y(X, self.w_star)
 
         for j in range(J):
             w_j_star = self.W_star[j, :]
