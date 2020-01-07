@@ -189,8 +189,10 @@ class Without_teacher():
             elif option == 'prob':
                 # print('use prob')
                 y = self.decision_Y_by_prob(X, self.W_star)
+            elif option == 'w_star':
+                y = self.predict_y(X, self.w_star)
             else:
-                # print('default: w_star')
+                print('default: w_star')
                 y = self.predict_y(X, self.w_star)
 
         for j in range(J):

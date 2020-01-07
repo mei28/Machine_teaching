@@ -69,3 +69,46 @@ THEANO_FLAGS=mode=FAST_RUN,device=cuda0 nohup python src/main_7_8.py > result/lo
 THEANO_FLAGS=mode=FAST_RUN,device=cuda0 nohup python src/main_7_9.py > result/log/out9.log & 
 
 THEANO_FLAGS=mode=FAST_RUN,device=cuda0 nohup python src/main_7_10.py > result/log/out10.log & 
+
+
+
+THEANO_FLAGS=mode=FAST_RUN,device=cuda0 nohup python src/main_8_1.py > result/log/out1.log & 
+
+THEANO_FLAGS=mode=FAST_RUN,device=cuda0 nohup python src/main_8_2.py > result/log/out2.log & 
+
+THEANO_FLAGS=mode=FAST_RUN,device=cuda0 nohup python src/main_8_3.py > result/log/out3.log & 
+
+THEANO_FLAGS=mode=FAST_RUN,device=cuda0 nohup python src/main_8_4.py > result/log/out4.log & 
+
+THEANO_FLAGS=mode=FAST_RUN,device=cuda0 nohup python src/main_8_5.py > result/log/out5.log & 
+
+THEANO_FLAGS=mode=FAST_RUN,device=cuda0 nohup python src/main_8_6.py > result/log/out6.log & 
+
+THEANO_FLAGS=mode=FAST_RUN,device=cuda0 nohup python src/main_8_7.py > result/log/out7.log & 
+
+THEANO_FLAGS=mode=FAST_RUN,device=cuda0 nohup python src/main_8_8.py > result/log/out8.log & 
+
+THEANO_FLAGS=mode=FAST_RUN,device=cuda0 nohup python src/main_8_9.py > result/log/out9.log & 
+
+THEANO_FLAGS=mode=FAST_RUN,device=cuda0 nohup python src/main_8_10.py > result/log/out10.log & 
+--------------------------------------------------------------------------------
+
+THEANO_FLAGS=mode=FAST_RUN,device=cuda0 nohup python src/main_9_1.py > result/log/out1.log & 
+
+THEANO_FLAGS=mode=FAST_RUN,device=cuda0 nohup python src/main_9_2.py > result/log/out2.log & 
+
+THEANO_FLAGS=mode=FAST_RUN,device=cuda0 nohup python src/main_9_3.py > result/log/out3.log & 
+
+THEANO_FLAGS=mode=FAST_RUN,device=cuda0 nohup python src/main_9_4.py > result/log/out4.log & 
+
+THEANO_FLAGS=mode=FAST_RUN,device=cuda0 nohup python src/main_9_5.py > result/log/out5.log & 
+
+THEANO_FLAGS=mode=FAST_RUN,device=cuda0 nohup python src/main_9_6.py > result/log/out6.log & 
+
+THEANO_FLAGS=mode=FAST_RUN,device=cuda0 nohup python src/main_9_7.py > result/log/out7.log & 
+
+THEANO_FLAGS=mode=FAST_RUN,device=cuda0 nohup python src/main_9_8.py > result/log/out8.log & 
+
+THEANO_FLAGS=mode=FAST_RUN,device=cuda0 nohup python src/main_9_9.py > result/log/out9.log & 
+
+THEANO_FLAGS=mode=FAST_RUN,device=cuda0 nohup python src/main_9_10.py > result/log/out10.log & 

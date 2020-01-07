@@ -15,12 +15,12 @@ def main():
     os.chdir(base_path)
 
     os.makedirs('Omniscient')
-    os.makedirs('Surrogate')
+    # os.makedirs('Surrogate')
     os.makedirs('Random')
-    os.makedirs('Without_teacher/majority')
+    # os.makedirs('Without_teacher/majority')
     # os.makedirs('Without_teacher/mix')
     # os.makedirs('Without_teacher/prob')
-    os.makedirs('Without_teacher/y')
+    # os.makedirs('Without_teacher/y')
     os.makedirs('Without_teacher/w_star')
 
 
