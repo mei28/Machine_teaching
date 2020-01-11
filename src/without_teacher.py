@@ -93,7 +93,7 @@ class Without_teacher():
         logit = np.dot(W, X.T).flatten()
         p_1_list = 1 / (1 + np.exp(-logit))
         for i, p_1 in enumerate(p_1_list):
-            Y[i] = np.random.choice(2, p=[1-p_1, p_1])
+            Y[i] = np.random.choice([-1,1], p=[1-p_1, p_1])
         return Y
 
     def predict_y(self, X, w):
@@ -114,7 +114,7 @@ class Without_teacher():
         for n in range(N):
             logit = np.dot(X.iloc[n], w)
             p_1 = 1 / (1 + np.exp(-logit))
-            y[n] = 1 if p_1 > 0.5 else 0
+            y[n] = 1 if p_1 > 0.5 else -1
         y = pd.Series(y)
         return y
 
@@ -190,6 +190,7 @@ class Without_teacher():
                 # print('use prob')
                 y = self.decision_Y_by_prob(X, self.W_star)
             elif option == 'w_star':
+                # print('use w_star')
                 y = self.predict_y(X, self.w_star)
             else:
                 print('default: w_star')
