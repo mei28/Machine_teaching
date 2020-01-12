@@ -86,6 +86,8 @@ class Without_teacher():
         -------
         numpy
             shape = (J,N) →　(J*N)
+            y_ij = {0,1}
+            for cross entropy loss
         """
         N, D = X.shape
         Y = np.zeros(shape=self.J*N)
@@ -93,7 +95,7 @@ class Without_teacher():
         logit = np.dot(W, X.T).flatten()
         p_1_list = 1 / (1 + np.exp(-logit))
         for i, p_1 in enumerate(p_1_list):
-            Y[i] = np.random.choice([-1,1], p=[1-p_1, p_1])
+            Y[i] = np.random.choice([0, 1], p=[1-p_1, p_1])
         return Y
 
     def predict_y(self, X, w):
@@ -108,6 +110,8 @@ class Without_teacher():
         Returns
         -------
         return predicted y pandas
+        y = {-1,1}
+        for logistic loss
         """
         N, D = X.shape
         y = np.zeros(N)

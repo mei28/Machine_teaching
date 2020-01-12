@@ -161,7 +161,7 @@ def return_answer_matrix(W, X, J):
             w_j = W[j, :]
             logit = np.dot(X_t, w_j)
             p_1 = 1 / (1 + np.exp(-logit))
-            Y[n, j] = np.random.choice(2, p=[1 - p_1, p_1])
+            Y[n, j] = np.random.choice([-1, 1], p=[1 - p_1, p_1])
     return Y
 
 
