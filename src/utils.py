@@ -171,3 +171,12 @@ def make_random_mask(X, n):
     mask_index = np.random.choice(range(N), size=n, replace=False)
     new_X = X.copy().iloc[mask_index]
     return new_X, n
+
+
+def change_label(y, prob=1.0):
+    p_1 = prob
+    for index, label in enumerate(y):
+        flag = np.random.choice([-1, 1], p=[1 - p_1, p_1])
+        y.iat[index] = y.iat[index]*flag
+
+    return y
