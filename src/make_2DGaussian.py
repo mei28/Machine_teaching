@@ -33,7 +33,7 @@ plt.show()
 # %%'
 sns.set()
 df_wee = pd.DataFrame(val_wee)
-df_wee['Spe'] = 'Weebil'
+df_wee['Spe'] = 'Weevil'
 df_ves = pd.DataFrame(val_ves)
 df_ves['Spe'] = 'Vespula'
 
@@ -264,7 +264,7 @@ ax.set(xlabel='f1', ylabel='f2')
 x = np.linspace(-1, 3)
 y = (-1.75371675 / 2.42340284) * x + 0.7
 
-# ax.plot(x, y)
+ax.plot(x, y)
 
 # -1.75371675 -2.42340284
 # %%
