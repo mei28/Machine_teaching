@@ -138,3 +138,5 @@ nohup python src/main_12_7.py > result/log/out7.log &
 nohup python src/main_12_8.py > result/log/out8.log &
 nohup python src/main_12_9.py > result/log/out9.log &
 nohup python src/main_12_10.py > result/log/out10.log &
+
+##################################
