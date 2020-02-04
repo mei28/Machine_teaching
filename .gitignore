@@ -4,3 +4,5 @@ src/__pycache__/
 __pycache__
 src/main*
 result/
+draw_graph/draw_graph.py
+draw_graph/20200107/matome_ave.csv
