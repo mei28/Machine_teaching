@@ -5,7 +5,7 @@ import theano.tensor as T
 
 
 class Teacher():
-    def __init__(self, min_w, alpha=0.01):
+    def __init__(self, min_w, W, N, alpha=0.01):
         """
         teacher base class
 
@@ -13,12 +13,19 @@ class Teacher():
         ----------
         min_w : numpy
             true model parameter
+        W : numpy
+            worker's parameter
+        N : int
+            the number of text book pool
         alpha : float, optional
             learning rate, by default 0.01
         """
         super().__init__()
         self.min_w = min_w.copy()
+        self.W = W.copy()
         self.alpha = alpha
+        J, D = W.shape
+        self.mask = np.full((J, N), True, dtype=bool)
 
     def make_grad_loss_matrix(self, X, y, w):
         """return grad loss matrix
@@ -44,6 +51,9 @@ class Teacher():
             grad_loss_matrix[i] = a
 
         return grad_loss_matrix
+
+    def return_textbook(self):
+        pass
 
     def grad_loss_function(self):
         """
@@ -112,30 +122,144 @@ class Teacher():
         index_list = np.where(X == np.min(X))[0]
         # if len(index_list) > 1:
         #     print('random choiced')
+        # if len(index_list) < 1:
+        #     print('Not exist')
         index = np.random.choice(index_list)
         return index
 
-    def drop_textbook(self, X, y, index_set):
+    def update_w_j(self, X_t, y_t, w_j):
         """
-        drop text book from textbool pool
+        update w_j
+
+        Parameters
+        ----------
+        X_t : pandas
+            text book
+        y_t : pandas
+            true label
+        w_j : numpy
+            worker's parameter
+
+        Returns
+        -------
+            return updated w_j
+        """
+        grad_loss = self.grad_loss_function()
+        grad_loss_ = grad_loss(X_t, y_t, w_j)[0]
+
+        w_j = w_j - self.alpha * grad_loss_
+        return w_j
+
+    def show_textbook(self, X, y=None, N=1, option='None'):
+        J, D = self.W.shape
+        if y is not None:
+            # print('use y')
+            y = y
+        else:
+            if option == 'mix':
+                # print('use mix')
+                y = self.decision_Y_by_mix(X, self.W)
+            elif option == 'majority':
+                # print('use majority')
+                y = self.decision_Y_by_majority(X, self.W)
+            elif option == 'prob':
+                # print('use prob')
+                y = self.decision_Y_by_prob(X, self.W)
+            elif option == 'min_w':
+                # print('use w_star')
+                y = self.predict_y(X, self.min_w)
+            else:
+                print('default: min_w')
+                y = self.predict_y(X, self.min_w)
+
+        for j in range(J):
+            w_j = self.W[j, :]
+            for n in range(N):
+                mask = self.mask[j]
+                X_j, y_j = X[mask], y[mask]
+
+                X_t, y_t = self.return_textbook(
+                    X_j, y_j, w_j, self.min_w)
+                index = np.where(X == X_t)[0][0]
+                self.mask[j, index] = False
+                w_j_new = self.update_w_j(X_t, y_t, w_j)
+                self.W[j, :] = w_j_new
+
+    def decision_Y_by_majority(self, X, W):
+        """
+        return label from worker decision
 
         Parameters
         ----------
         X : pandas
             text book pool
-        y : pandas
-            goap
-        index : int
-            index which is dropped
+
+        Returns
+        -------
+        y pandas
+            decision by majority
         """
-        if type(index_set) is np.int64:
-            X.drop(index_set, inplace=True)
-            y.drop(index_set, inplace=True)
-            X.reset_index(drop=True, inplace=True)
-            y.reset_index(drop=True, inplace=True)
-        else:
-            for index in index_set:
-                X.drop(index, inplace=True)
-                y.drop(index, inplace=True)
-            X.reset_index(drop=True, inplace=True)
-            y.reset_index(drop=True, inplace=True)
+        N = X.shape[0]
+        J = self.J
+
+        y = np.zeros(shape=(N))
+        Y = return_answer_matrix(W, X, J=J)
+
+        for n in range(N):
+            Y_n = Y[n, :]
+            y[n] = return_mode(Y_n)
+        y = pd.Series(y)
+        return y
+
+    def decision_Y_by_prob(self, X, W):
+        N = X.shape[0]
+        J = self.J
+
+        y = np.zeros(shape=N)
+        Y = return_answer_matrix(W, X, J)
+
+        for i, tmp in enumerate(Y):
+            y[i] = np.random.choice(tmp)
+        y = pd.Series(y)
+        return y
+
+    def decision_Y_by_mix(self, X, W):
+        N = X.shape[0]
+        J = self.J
+
+        y = np.zeros(shape=N)
+        Y = return_answer_matrix(W, X, J)
+
+        threshhold = 0.2
+        for i, tmp in enumerate(Y):
+            sum_num = tmp.sum()
+            if J * threshhold < sum_num and sum_num < (1 - threshhold) * J:
+                y[i] = np.random.choice(tmp)
+            else:
+                y[i] = return_mode(tmp)
+        y = pd.Series(y)
+        return y
+
+    def predict_y(self, X, w):
+        """
+        return predicted y
+        Parameters
+        ----------
+        X : pandas
+        w : numpy
+            model parameter
+
+        Returns
+        -------
+        return predicted y pandas
+        y = {-1,1}
+        for logistic loss
+        """
+        N, D = X.shape
+        y = np.zeros(N)
+        for n in range(N):
+            logit = np.dot(X.iloc[n], w)
+            p_1 = 1 / (1 + np.exp(-logit))
+            y[n] = 1 if p_1 > 0.5 else -1
+        y = pd.Series(y)
+        return y

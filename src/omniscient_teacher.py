@@ -1,14 +1,14 @@
 import import_path
 import numpy as np
 import pandas as pd
-from model import *
-from oracle import Oracle
 from teacher import Teacher
+import theano
+import theano.tensor as T
 
 
 class Omniscient(Teacher):
-    def __init__(self, min_w, alpha=0.01):
-        super().__init__(min_w, alpha=alpha)
+    def __init__(self, min_w, W, N, alpha=0.01):
+        super().__init__(min_w, W, N, alpha=alpha)
 
     def make_loss_function(self):
         """
@@ -29,7 +29,7 @@ class Omniscient(Teacher):
         w_ = T.vector(name='w_')
         w_t = T.vector(name='w_t')
 
-        first = (self.alpha ** 2) * (grad_loss ** 2).sum(axis=1)
+        first = (self.alpha ** 2) * (grad_loss ** 2).sum()
         second = -2 * self.alpha * (T.dot(grad_loss, w_t - w_))
         loss = first + second
         function = theano.function(
@@ -39,14 +39,14 @@ class Omniscient(Teacher):
         )
         return function
 
-    def return_textbook(self, X, y, w_t, w_, drop=True):
+    def return_textbook(self, X, y, w_t, w_):
         """
         return text book
 
         Parameters
         ----------
         X : pandas
-            text book pook
+            text book pool
         y : pandas
             goal
         w_t : numpy
@@ -64,7 +64,5 @@ class Omniscient(Teacher):
         index = self.return_argmin_index(loss_matrix)
         # print('omni: {}'.format(index))
         X_t, y_t = X.iloc[index], y.iloc[index]
-        if drop:
-            self.drop_textbook(X, y, index)
 
-        return X_t, y_t, index
+        return X_t, y_t

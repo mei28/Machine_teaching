@@ -14,7 +14,7 @@ ves_sigma = np.array([[0.12, 0], [0, 0.12]])
 
 val_ves = np.random.multivariate_normal(ves_mu, ves_sigma, 100)
 sns.jointplot(val_ves[:, 0], val_ves[:, 1])
-val_ves = val_ves[val_ves[:, 0] + val_ves[:, 1] > 0]
+# val_ves = val_ves[val_ves[:, 0] + val_ves[:, 1] > 0]
 val_ves[:, 0] = np.exp([val_ves[:, 0]])
 
 plt.show()
@@ -26,14 +26,14 @@ wee_sigma = np.array([[0.12, 0], [0, 0.12]])
 
 val_wee = np.random.multivariate_normal(wee_mu, wee_sigma, 100)
 sns.jointplot(val_wee[:, 0], val_wee[:, 1])
-val_wee = val_wee[val_wee[:, 0] + val_wee[:, 1] < 0]
+# val_wee = val_wee[val_wee[:, 0] + val_wee[:, 1] < 0]
 val_wee[:, 0] = np.exp(val_wee[:, 0])
 plt.show()
 
 # %%'
 sns.set()
 df_wee = pd.DataFrame(val_wee)
-df_wee['Spe'] = 'Weebil'
+df_wee['Spe'] = 'Weevil'
 df_ves = pd.DataFrame(val_ves)
 df_ves['Spe'] = 'Vespula'
 
@@ -247,9 +247,24 @@ def main():
     df_all.to_csv('output/weebil_vespula.csv', index=False)
 
 
-
 main()
 
 # %%
 if __name__ == "__main__":
     main()
+# %%
+display(df_all)
+sns.set_style('white')
+fig = plt.figure(figsize=(5, 5))
+ax = fig.add_subplot(111)
+ax = sns.scatterplot(x=0, y=1, hue='Spe', data=df_all)
+ax.set(xlabel='f1', ylabel='f2')
+
+
+x = np.linspace(-1, 3)
+y = (-1.75371675 / 2.42340284) * x + 0.7
+
+ax.plot(x, y)
+
+# -1.75371675 -2.42340284
+# %%

@@ -4,6 +4,7 @@ import numpy as np
 import theano
 import theano.tensor as T
 from sklearn.metrics import roc_auc_score
+import scipy.stats as stats
 
 
 def make_grad_loss_matrix(X, y, w):
@@ -15,8 +16,8 @@ def make_grad_loss_matrix(X, y, w):
         feature matrix
     y : pandas vector
         predict
-    w : numpy 
-        model parameter    
+    w : numpy
+        model parameter
     Returns
     -------
     numpy matrix
@@ -61,7 +62,7 @@ def grad_loss_function():
 
 def loss_function():
     """
-    return loss function 
+    return loss function
 
     Returns
     -------
@@ -107,7 +108,7 @@ def return_argmin_index(X):
 
 def predict(X, y, w):
     logit = np.dot(X, w)
-    pred_y = T.nnet.sigmoid(logit).eval()
+    pred_y = 1/(1+np.exp(-logit))
     # pred_y = [1 if i > 0.5 else 0 for i in pred_y]
     return(roc_auc_score(y, pred_y))
     print(roc_auc_score(y, pred_y))
@@ -126,7 +127,7 @@ def predict_by_W(X, y, W):
 
 
 def write_np2csv(X, path):
-    np.savetxt('output/{}.csv'.format(path), X, delimiter=',')
+    np.savetxt(path, X, delimiter=',')
 
 
 def return_copy_dateset(X, y):
@@ -137,3 +138,45 @@ def return_copy_dateset(X, y):
 def rmse_W(W, W_star, axis=None):
     ans = np.sqrt(((W - W_star)**2).mean(axis))
     return ans
+
+
+def rmse_w(min_w, w_star):
+    ans = np.sqrt((min_w - w_star) ** 2).mean()
+    return ans
+
+
+def return_mode(y):
+    return stats.mode(y)[0]
+
+
+def return_answer_matrix(W, X, J):
+    N = X.shape[0]
+    W = W.copy()
+
+    Y = np.zeros(shape=(N, J))
+
+    for n in range(N):
+        X_t = X.iloc[n, :]
+        for j in range(J):
+            w_j = W[j, :]
+            logit = np.dot(X_t, w_j)
+            p_1 = 1 / (1 + np.exp(-logit))
+            Y[n, j] = np.random.choice([-1, 1], p=[1 - p_1, p_1])
+    return Y
+
+
+def make_random_mask(X, n):
+    N, D = X.shape
+    mask = np.full(N, False, dtype=bool)
+    mask_index = np.random.choice(range(N), size=n, replace=False)
+    new_X = X.copy().iloc[mask_index]
+    return new_X, n
+
+
+def change_label(y, prob=1.0):
+    p_1 = prob
+    for index, label in enumerate(y):
+        flag = np.random.choice([-1, 1], p=[1 - p_1, p_1])
+        y.iat[index] = y.iat[index]*flag
+
+    return y

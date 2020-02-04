@@ -1,3 +1,4 @@
+import import_path
 from teacher import Teacher
 import numpy as np
 import pandas as pd
@@ -6,19 +7,8 @@ import theano.tensor as T
 
 
 class Surrogate(Teacher):
-    def __init__(self, min_w, alpha=0.01):
-        """
-        constructor
-
-        Parameters
-        ----------
-        Teacher : base model class
-        min_w : numpy
-            true model parameter            
-        alpha : float, optional
-            learning rate, by default 0.01
-        """
-        super().__init__(min_w, alpha=alpha)
+    def __init__(self, min_w, W, N, alpha=0.01):
+        super().__init__(min_w, W, N, alpha=alpha)
 
     def make_loss_function(self):
         """
@@ -42,7 +32,7 @@ class Surrogate(Teacher):
         )
         return t
 
-    def return_textbook(self, X, y, w_t, w_, drop=True):
+    def return_textbook(self, X, y, w_t, w_):
         """
         return text book
 
@@ -72,7 +62,5 @@ class Surrogate(Teacher):
         index = self.return_argmin_index(loss_matrix)
         # print('surr: {}'.format(index))
         X_t, y_t = X.iloc[index], y.iloc[index]
-        if drop:
-            self.drop_textbook(X, y, index)
 
-        return X_t, y_t, index
+        return X_t, y_t
