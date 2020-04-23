@@ -33,12 +33,12 @@ plt.show()
 # %%'
 sns.set()
 df_wee = pd.DataFrame(val_wee)
-df_wee['Spe'] = 'Weevil'
+df_wee['Species'] = 'Weevil'
 df_ves = pd.DataFrame(val_ves)
-df_ves['Spe'] = 'Vespula'
+df_ves['Species'] = 'Vespula'
 
 df_all = pd.concat([df_wee, df_ves], axis=0)
-sns.scatterplot(data=df_all, x=0, y=1, hue='Spe')
+sns.scatterplot(data=df_all, x=0, y=1, hue='Species')
 print('{}{}{}'.format('-'*10, 'weebil', '-'*10))
 print(df_wee.describe())
 print('{}{}{}'.format('-'*10, 'vespula', '-'*10))
@@ -95,7 +95,7 @@ for index, row in df_ves.iterrows():
         fill=int(128 + int(150*row[1]))
     )
     im.save(
-        'img/{0}/{1}_{2}.jpg'.format(row['Spe'], row['Spe'], str(index).zfill(3)))
+        'img/{0}/{1}_{2}.jpg'.format(row['Species'], row['Species'], str(index).zfill(3)))
 
 
 # %%
@@ -148,7 +148,7 @@ for index, row in df_wee.iterrows():
     )
 
     im.save(
-        'img/{0}/{1}_{2}.jpg'.format(row['Spe'], row['Spe'], str(index).zfill(3)))
+        'img/{0}/{1}_{2}.jpg'.format(row['Species'], row['Species'], str(index).zfill(3)))
 
 
 # %%
@@ -196,7 +196,7 @@ for index, row in df_all.iterrows():
     )
 
     im.save(
-        'img/{0}/{1}_{2}.jpg'.format('all', row['Spe'], str(index).zfill(3)))
+        'img/{0}/{1}_{2}.jpg'.format('all', row['Species'], str(index).zfill(3)))
 # %%
 
 
@@ -222,14 +222,14 @@ def make_data():
 
     sns.set()
     df_wee = pd.DataFrame(val_wee)
-    df_wee['Spe'] = 1
+    df_wee['Species'] = 1
     df_ves = pd.DataFrame(val_ves)
-    df_ves['Spe'] = 0
+    df_ves['Species'] = 0
 
     # weebil 1 vespula 0
 
     df_all = pd.concat([df_wee, df_ves], axis=0)
-    sns.scatterplot(data=df_all, x=0, y=1, hue='Spe')
+    sns.scatterplot(data=df_all, x=0, y=1, hue='Species')
     print('{}{}{}'.format('-'*10, 'weebil', '-'*10))
     print(df_wee.describe())
     print('{}{}{}'.format('-'*10, 'vespula', '-'*10))
@@ -257,7 +257,7 @@ display(df_all)
 sns.set_style('white')
 fig = plt.figure(figsize=(5, 5))
 ax = fig.add_subplot(111)
-ax = sns.scatterplot(x=0, y=1, hue='Spe', data=df_all)
+ax = sns.scatterplot(x=0, y=1, hue='Species', data=df_all)
 ax.set(xlabel='f1', ylabel='f2')
 
 
