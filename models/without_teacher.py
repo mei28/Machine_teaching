@@ -1,10 +1,10 @@
 import import_path
-from oracle import Oracle
+from .oracle import Oracle
 import numpy as np
 import pandas as pd
 from load_data import read_W
-from model import *
-from omniscient_teacher import Omniscient
+from .model import *
+from .omniscient_teacher import Omniscient
 from utils import *
 
 

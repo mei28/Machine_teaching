@@ -1,7 +1,7 @@
 import import_path
 import numpy as np
 import pandas as pd
-from teacher import Teacher
+from .teacher import Teacher
 import theano
 import theano.tensor as T
 

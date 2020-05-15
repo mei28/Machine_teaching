@@ -1,4 +1,4 @@
-from model import *
+from .model import *
 import import_path
 import pandas as pd
 import numpy as np
