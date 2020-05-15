@@ -12,3 +12,5 @@ machine_teaching/*
 .machine_teaching
 
 *egg-info
+
+logs
