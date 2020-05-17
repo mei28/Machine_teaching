@@ -14,8 +14,8 @@ from sklearn.metrics import roc_auc_score
 import logging
 import datetime
 # %%
-df = read_csv('output/weebil_vespula_pm1.csv', header=0)
-train_X, test_X, train_y, test_y = split_data(df, False)
+df = read_csv('output/wine-quality-pm1.csv', header=0)
+train_X, test_X, train_y, test_y = split_data(df, True)
 eta, lambd, alpha = 1, 2, 0.01
 training_epochs, loops = 10, 10
 J = 10
