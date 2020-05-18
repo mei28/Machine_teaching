@@ -115,10 +115,12 @@ class Without_teacher():
         """
         N, D = X.shape
         y = np.zeros(N)
-        for n in range(N):
-            logit = np.dot(X.iloc[n], w)
-            p_1 = 1 / (1 + np.exp(-logit))
-            y[n] = 1 if p_1 > 0.5 else -1
+        # for n in range(N):
+        #     logit = np.dot(X.iloc[n], w)
+        #     p_1 = 1 / (1 + np.exp(-logit))
+        #     y[n] = 1 if p_1 > 0.5 else -1
+        logit = np.dot(X, w)
+        y = 1 / (1 + np.exp(-logit))
         y = pd.Series(y)
         return y
 
