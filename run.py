@@ -28,107 +28,109 @@ between_textbook_list = [1]
 # 組
 k = 1
 
-oracle = Oracle(eta=eta, lambd=lambd)
-min_w = oracle.estimate_min_w(
-    pd.concat([train_X, test_X]), pd.concat([train_y, test_y]))
-print('{}: {}'.format(min_w, predict(test_X, test_y, min_w)))
-W_init = oracle.make_W_init(J=J)
-W = W_init.copy()
-train_X_ = train_X.copy()
-train_y_ = train_y.copy()
+lambds = [2, 5, 10]
+for lambd in lambds:
+    oracle = Oracle(eta=eta, lambd=lambd)
+    min_w = oracle.estimate_min_w(
+        pd.concat([train_X, test_X]), pd.concat([train_y, test_y]))
+    print('{}: {}'.format(min_w, predict(test_X, test_y, min_w)))
+    W_init = oracle.make_W_init(J=J)
+    W = W_init.copy()
+    train_X_ = train_X.copy()
+    train_y_ = train_y.copy()
 
-now = datetime.datetime.now()
-now_str = now.strftime('%Y%m%d%H%M')
-result_path = 'result/{}_{}'.format(now_str, k)
-logging.basicConfig(
-    filename='./logs/log_{0:%Y%m%d%H%M%S}_{1}.log'.format(now, k), level=logging.DEBUG
-)
-logging.debug('./logs/log_{0:%Y%m%d%H%M%S}_{1}.log'.format(now, k))
-logging.debug('min_w')
-logging.debug(min_w)
-logging.debug('eta,lambd')
-logging.debug([eta, lambd])
-# %%
+    now = datetime.datetime.now()
+    now_str = now.strftime('%Y%m%d%H%M')
+    result_path = 'result/insect_{}_{}_{}'.format(now_str, k, lambd)
+    logging.basicConfig(
+        filename='./logs/log_insect_{0:%Y%m%d%H%M%S}_{1}_{2}.log'.format(now, k, lambd), level=logging.DEBUG
+    )
+    logging.debug(
+        './logs/log_{0:%Y%m%d%H%M%S}_{1}_{2}.log'.format(now, k, lambd))
+    logging.debug('min_w')
+    logging.debug(min_w)
+    logging.debug('eta,lambd')
+    logging.debug([eta, lambd])
+    # %%
 
-# %%
-# Omniscient
-logging.debug('Omniscient')
-train_X_ = train_X.copy()
-train_y_ = train_y.copy()
-W = W_init.copy()
-omt = Omniscient(min_w, W, N=train_X_.shape[0], alpha=alpha)
+    # %%
+    # Omniscient
+    logging.debug('Omniscient')
+    train_X_ = train_X.copy()
+    train_y_ = train_y.copy()
+    W = W_init.copy()
+    omt = Omniscient(min_w, W, N=train_X_.shape[0], alpha=alpha)
 
-a = np.zeros(1)
-for i in range(textbook):
-    a = np.vstack((a, predict_by_W(test_X, test_y, omt.W)))
+    a = np.zeros(1)
+    for i in range(textbook):
+        a = np.vstack((a, predict_by_W(test_X, test_y, omt.W)))
 
-    print("{}: {}".format(i, predict_by_W(test_X, test_y, omt.W)))
-    omt.show_textbook(X=train_X_, y=None, N=1, option='min_w')
-    logging.debug(predict_by_W(test_X, test_y, omt.W))
-a = a[1:]
-write_np2csv(
-    a, '{}_{}.csv'.format(result_path, 'omniscient'))
-print('{}: finished.'.format(k))
-# %%
-# Random
+        print("{}: {}".format(i, predict_by_W(test_X, test_y, omt.W)))
+        omt.show_textbook(X=train_X_, y=None, N=1, option='min_w')
+        logging.debug(predict_by_W(test_X, test_y, omt.W))
+    a = a[1:]
+    write_np2csv(
+        a, '{}_{}.csv'.format(result_path, 'omniscient'))
+    print('{}: finished.'.format(k))
+    # %%
+    # Random
 
-train_X_ = train_X.copy()
-train_y_ = train_y.copy()
-W = W_init.copy()
+    train_X_ = train_X.copy()
+    train_y_ = train_y.copy()
+    W = W_init.copy()
 
-rat = Random(min_w, W, N=train_X_.shape[0], alpha=alpha)
-logging.debug('Random')
-a = np.zeros(1)
-for i in range(textbook):
-    a = np.vstack((a, predict_by_W(test_X, test_y, rat.W)))
+    rat = Random(min_w, W, N=train_X_.shape[0], alpha=alpha)
+    logging.debug('Random')
+    a = np.zeros(1)
+    for i in range(textbook):
+        a = np.vstack((a, predict_by_W(test_X, test_y, rat.W)))
 
-    print("{}: {}".format(i, predict_by_W(test_X, test_y, rat.W)))
-    rat.show_textbook(train_X_, y=None, N=1, option='min_w')
-    logging.debug(predict_by_W(test_X, test_y, rat.W))
-a = a[1:]
-write_np2csv(a, '{}_{}.csv'.format(result_path, 'random'))
-print('{}: finished.'.format(k))
+        print("{}: {}".format(i, predict_by_W(test_X, test_y, rat.W)))
+        rat.show_textbook(train_X_, y=None, N=1, option='min_w')
+        logging.debug(predict_by_W(test_X, test_y, rat.W))
+    a = a[1:]
+    write_np2csv(a, '{}_{}.csv'.format(result_path, 'random'))
+    print('{}: finished.'.format(k))
 
-# %%
-for t_num in test_textbook_list:
-    for b_num in between_textbook_list:
-        # wot
-        logging.debug('without teacher')
-        w_init = np.random.normal(loc=0, scale=lambd, size=min_w.shape)
-        W = W_init.copy()
-        train_X_ = train_X.copy()
-        train_y_ = train_y.copy()
+    # %%
+    for t_num in test_textbook_list:
+        for b_num in between_textbook_list:
+            # wot
+            logging.debug('without teacher')
+            w_init = np.random.normal(loc=0, scale=lambd, size=min_w.shape)
+            W = W_init.copy()
+            train_X_ = train_X.copy()
+            train_y_ = train_y.copy()
 
-        wot = Without_teacher(
-            w_init, W, N=train_X_.shape[0], eta=eta, lambd=lambd, alpha=alpha)
+            wot = Without_teacher(
+                w_init, W, N=train_X_.shape[0], eta=eta, lambd=lambd, alpha=alpha)
 
-        a = np.zeros(7)
-        for i in range(textbook):
-            tmp = np.append([], predict(test_X, test_y, min_w))
-            tmp = np.append(tmp, predict(test_X, test_y, wot.w_star))
-            tmp = np.append(tmp, predict_by_W(test_X, test_y, wot.W))
-            tmp = np.append(tmp, predict_by_W(test_X, test_y, wot.W_star))
-            tmp = np.append(tmp, rmse_w(wot.w_star, min_w))
-            tmp = np.append(tmp, rmse_W(wot.W, wot.W_star))
-            tmp = np.append(tmp, roc_auc_score(
-                test_y, wot.predict_y(test_X, wot.w_star)))
-            a = np.vstack((a, tmp))
+            a = np.zeros(7)
+            for i in range(textbook):
+                tmp = np.append([], predict(test_X, test_y, min_w))
+                tmp = np.append(tmp, predict(test_X, test_y, wot.w_star))
+                tmp = np.append(tmp, predict_by_W(test_X, test_y, wot.W))
+                tmp = np.append(tmp, predict_by_W(test_X, test_y, wot.W_star))
+                tmp = np.append(tmp, rmse_w(wot.w_star, min_w))
+                tmp = np.append(tmp, rmse_W(wot.W, wot.W_star))
+                tmp = np.append(tmp, roc_auc_score(
+                    test_y, wot.predict_y(test_X, wot.w_star)))
+                a = np.vstack((a, tmp))
 
-            if i % b_num == 0:
-                masked_textbook, _ = make_random_mask(train_X_, t_num)
-                wot.learn(masked_textbook, 10, 10)
-            print('{}: {}'.format(i, predict_by_W(test_X, test_y, wot.W)))
-            wot.show_textbook(train_X_, y=None, N=1, option='w_star')
-            print(predict(test_X, test_y, min_w), roc_auc_score(
-                test_y, wot.predict_y(test_X, wot.w_star)))
-            logging.debug([predict_by_W(test_X, test_y, wot.W),
-                           predict_by_W(test_X, test_y, wot.W_star)])
+                if i % b_num == 0:
+                    masked_textbook, _ = make_random_mask(train_X_, t_num)
+                    wot.learn(masked_textbook, 10, 10)
+                print('{}: {}'.format(i, predict_by_W(test_X, test_y, wot.W)))
+                wot.show_textbook(train_X_, y=None, N=1, option='w_star')
+                print(predict(test_X, test_y, min_w), roc_auc_score(
+                    test_y, wot.predict_y(test_X, wot.w_star)))
+                logging.debug([predict_by_W(test_X, test_y, wot.W),
+                               predict_by_W(test_X, test_y, wot.W_star)])
 
-        a = a[1:]
-        write_np2csv(
-            a, '{}_{}_{}_{}.csv'.format(result_path, "wot", t_num, b_num))
+            a = a[1:]
+            write_np2csv(
+                a, '{}_{}_{}_{}.csv'.format(result_path, "wot", t_num, b_num))
 
-        print('t{}b{}: finished.'.format(t_num, b_num))
+            print('t{}b{}: finished.'.format(t_num, b_num))
 
-
-# %%
+    # %%
