@@ -20,7 +20,7 @@ eta, lambd, alpha = 1, 2, 0.01
 training_epochs, loops = 10, 10
 J = 10
 # 提示する教材合計数
-textbook = 2
+textbook = 500
 # 推定に使う教材数
 test_textbook_list = [100]
 # 推定間に提示する教材数
@@ -40,7 +40,7 @@ for lambd in lambds:
     train_y_ = train_y.copy()
 
     now = datetime.datetime.now()
-    now_str = now.strftime('%Y%m%d%H%M')
+    now_str = now.strftime('%Y%m%d%H%M%S')
     result_path = 'result/insect_{}_{}_{}'.format(now_str, k, lambd)
     logging.basicConfig(
         filename='./logs/log_insect_{0:%Y%m%d%H%M%S}_{1}_{2}.log'.format(now, k, lambd), level=logging.DEBUG
