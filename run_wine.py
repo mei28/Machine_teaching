@@ -20,7 +20,7 @@ eta, lambd, alpha = 1, 2, 0.01
 training_epochs, loops = 10, 10
 J = 10
 # 提示する教材合計数
-textbook = 500
+textbook = 30
 # 推定に使う教材数
 test_textbook_list = [100]
 # 推定間に提示する教材数
@@ -70,7 +70,7 @@ for lambd in lambds:
         a = np.vstack((a, predict_by_W(test_X, test_y, omt.W)))
 
         print("{}: {}".format(i, predict_by_W(test_X, test_y, omt.W)))
-        omt.show_textbook(X=train_X_, y=None, N=1, option='min_w')
+        omt.show_textbook(X=train_X_, y=train_y_, N=1, option='min_w')
         logging.debug(predict_by_W(test_X, test_y, omt.W))
     a = a[1:]
     write_np2csv(
@@ -90,7 +90,7 @@ for lambd in lambds:
         a = np.vstack((a, predict_by_W(test_X, test_y, rat.W)))
 
         print("{}: {}".format(i, predict_by_W(test_X, test_y, rat.W)))
-        rat.show_textbook(train_X_, y=None, N=1, option='min_w')
+        rat.show_textbook(train_X_, y=train_y_, N=1, option='min_w')
         logging.debug(predict_by_W(test_X, test_y, rat.W))
     a = a[1:]
     write_np2csv(a, '{}_{}.csv'.format(result_path, 'random'))

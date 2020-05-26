@@ -66,7 +66,7 @@ for lambd in lambds:
         a = np.vstack((a, predict_by_W(test_X, test_y, omt.W)))
 
         print("{}: {}".format(i, predict_by_W(test_X, test_y, omt.W)))
-        omt.show_textbook(X=train_X_, y=None, N=1, option='min_w')
+        omt.show_textbook(X=train_X_, y=train_y_, N=1, option='min_w')
         logging.debug(predict_by_W(test_X, test_y, omt.W))
     a = a[1:]
     write_np2csv(
@@ -86,7 +86,7 @@ for lambd in lambds:
         a = np.vstack((a, predict_by_W(test_X, test_y, rat.W)))
 
         print("{}: {}".format(i, predict_by_W(test_X, test_y, rat.W)))
-        rat.show_textbook(train_X_, y=None, N=1, option='min_w')
+        rat.show_textbook(train_X_, y=train_y_, N=1, option='min_w')
         logging.debug(predict_by_W(test_X, test_y, rat.W))
     a = a[1:]
     write_np2csv(a, '{}_{}.csv'.format(result_path, 'random'))
