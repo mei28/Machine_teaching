@@ -1,5 +1,5 @@
 import import_path
-from teacher import Teacher
+from .teacher import Teacher
 import numpy as np
 import pandas as pd
 import theano

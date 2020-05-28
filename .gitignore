@@ -9,3 +9,8 @@ draw_graph/20200107/matome_ave.csv
 draw_graph/save_fig
 
 machine_teaching/*
+.machine_teaching
+
+*egg-info
+
+logs
