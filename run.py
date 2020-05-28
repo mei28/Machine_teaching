@@ -7,12 +7,13 @@ from models.surrogate_teacher import Surrogate
 from models.omniscient_teacher import Omniscient
 from models.random_teacher import Random
 from models.without_teacher import Without_teacher
-from utils import predict, predict_by_W, rmse_W, write_np2csv, rmse_w, make_random_mask
+from utils import predict, predict_by_W, rmse_W, write_np2csv, rmse_w, make_random_mask, predict_wj
 from load_data import read_W, read_csv, split_data
 from tqdm import tqdm
 from sklearn.metrics import roc_auc_score
 import logging
 import datetime
+
 # %%
 df = read_csv('output/weebil_vespula_pm1.csv', header=0)
 train_X, test_X, train_y, test_y = split_data(df, False)
@@ -28,7 +29,7 @@ between_textbook_list = [1]
 # 組
 k = 1
 
-lambds = [2, 5, 10]
+lambds = [1, 2, 5, 10]
 for lambd in lambds:
     oracle = Oracle(eta=eta, lambd=lambd)
     min_w = oracle.estimate_min_w(
@@ -62,15 +63,18 @@ for lambd in lambds:
     omt = Omniscient(min_w, W, N=train_X_.shape[0], alpha=alpha)
 
     a = np.zeros(1)
+    b = np.zeros(J)
     for i in range(textbook):
         a = np.vstack((a, predict_by_W(test_X, test_y, omt.W)))
-
-        print("{}: {}".format(i, predict_by_W(test_X, test_y, omt.W)))
+        b = np.vstack((b, predict_wj(test_X, test_y, omt.W)))
+        print(predict_wj(test_X, test_y, omt.W))
         omt.show_textbook(X=train_X_, y=train_y_, N=1, option='min_w')
         logging.debug(predict_by_W(test_X, test_y, omt.W))
     a = a[1:]
+    b = b[1:]
     write_np2csv(
         a, '{}_{}.csv'.format(result_path, 'omniscient'))
+    write_np2csv(b, '{}_{}_wj.csv'.format(result_path, 'omniscient'))
     print('{}: finished.'.format(k))
     # %%
     # Random
@@ -82,14 +86,18 @@ for lambd in lambds:
     rat = Random(min_w, W, N=train_X_.shape[0], alpha=alpha)
     logging.debug('Random')
     a = np.zeros(1)
+    b = np.zeros(J)
     for i in range(textbook):
         a = np.vstack((a, predict_by_W(test_X, test_y, rat.W)))
+        b = np.vstack((b, predict_wj(test_X, test_y, rat.W)))
 
         print("{}: {}".format(i, predict_by_W(test_X, test_y, rat.W)))
         rat.show_textbook(train_X_, y=train_y_, N=1, option='min_w')
         logging.debug(predict_by_W(test_X, test_y, rat.W))
     a = a[1:]
+    b = b[1:]
     write_np2csv(a, '{}_{}.csv'.format(result_path, 'random'))
+    write_np2csv(b, '{}_{}_wj.csv'.format(result_path, 'random'))
     print('{}: finished.'.format(k))
 
     # %%
@@ -106,6 +114,7 @@ for lambd in lambds:
                 w_init, W, N=train_X_.shape[0], eta=eta, lambd=lambd, alpha=alpha)
 
             a = np.zeros(7)
+            b = np.zeros(J)
             for i in range(textbook):
                 tmp = np.append([], predict(test_X, test_y, min_w))
                 tmp = np.append(tmp, predict(test_X, test_y, wot.w_star))
@@ -116,6 +125,8 @@ for lambd in lambds:
                 tmp = np.append(tmp, roc_auc_score(
                     test_y, wot.predict_y(test_X, wot.w_star)))
                 a = np.vstack((a, tmp))
+                b = np.vstack((b, predict_wj(test_X, test_y, wot.W)))
+                print()
 
                 if i % b_num == 0:
                     masked_textbook, _ = make_random_mask(train_X_, t_num)
@@ -130,7 +141,9 @@ for lambd in lambds:
             a = a[1:]
             write_np2csv(
                 a, '{}_{}_{}_{}.csv'.format(result_path, "wot", t_num, b_num))
-
+            b = b[1:]
+            write_np2csv(b, '{}_{}_{}_{}_wj.csv'.format(
+                result_path, 'wot', t_num, b_num))
             print('t{}b{}: finished.'.format(t_num, b_num))
 
     # %%
