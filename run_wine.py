@@ -20,7 +20,7 @@ eta, lambd, alpha = 1, 2, 0.01
 training_epochs, loops = 10, 10
 J = 10
 # 提示する教材合計数
-textbook = 30
+textbook = 500
 # 推定に使う教材数
 test_textbook_list = [100]
 # 推定間に提示する教材数
