@@ -7,6 +7,17 @@ from sklearn.metrics import roc_auc_score
 import scipy.stats as stats
 
 
+def predict_wj(X, y, W):
+    J, D = W.shape
+    val = 0
+    auc_list = np.zeros(J)
+    for j in range(J):
+        w_j = W[j, :]
+        tmp = predict(X, y, w_j)
+        auc_list[j] = tmp
+    return auc_list
+
+
 def make_grad_loss_matrix(X, y, w):
     """return grad loss matrix
 
