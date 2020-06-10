@@ -84,9 +84,13 @@ def mean_data_wj(data_list, spe=None):
     df = sum_data_wj(data_list, spe=spe)
     df = df.T
     df = df.sort_values(by=[0], ascending=True)
-    new_df['high'] = df.iloc[7:].mean(axis=0)
-    new_df['middle'] = df.iloc[3:7].mean(axis=0)
-    new_df['low'] = df.iloc[:3].mean(axis=0)
+    new_df['0.75~'] = df[df.iloc[:, 0] > 0.75].mean(axis=0)
+    new_df['0.65~0.75'] = df[df.iloc[:, 0] <=
+                             0.75 and 0.65 < df.iloc[:, 0]].mean(axis=0)
+    new_df['~0.65'] = df[df.iloc[:, 0] <= 0.65].mean(axis=0)
+    # new_df['high'] = df.iloc[7:].mean(axis=0)
+    # new_df['middle'] = df.iloc[3:7].mean(axis=0)
+    # new_df['low'] = df.iloc[:3].mean(axis=0)
     return new_df
 
 
