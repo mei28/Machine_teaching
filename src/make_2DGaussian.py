@@ -258,7 +258,11 @@ sns.set_style('white')
 fig = plt.figure(figsize=(5, 5))
 ax = fig.add_subplot(111)
 ax = sns.scatterplot(x=0, y=1, hue='Species', data=df_all)
-ax.set(xlabel='f1', ylabel='f2')
+# ax.set(xlabel='the  head/body  size  ratio', ylabel='the head/body color ratio')
+ax.set_xlabel(xlabel='the  head/body size ratio',fontsize=18)
+ax.set_ylabel(ylabel='the  head/body color ratio',fontsize=18)
+
+ax.legend(fontsize=16)
 
 
 x = np.linspace(-1, 3)
@@ -266,5 +270,7 @@ y = (-1.75371675 / 2.42340284) * x + 0.7
 
 ax.plot(x, y)
 
+plt.tick_params(labelsize=16)
+fig.savefig('scatterplot.png',bbox_inches='tight')
 # -1.75371675 -2.42340284
 # %%
