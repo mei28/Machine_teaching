@@ -27,7 +27,7 @@ test_textbook_list = [100]
 between_textbook_list = [1]
 # 組
 k = 1
-lambds = [1, 2, 5, 10]
+lambds = [1, 2, 3, 4, 5]
 
 for lambd in lambds:
     oracle = Oracle(eta=eta, lambd=lambd)
