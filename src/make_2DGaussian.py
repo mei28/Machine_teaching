@@ -272,5 +272,7 @@ ax.plot(x, y)
 
 plt.tick_params(labelsize=16)
 fig.savefig('scatterplot.png',bbox_inches='tight')
+fig.savefig('scatterplot.eps',bbox_inches='tight')
+fig.savefig('scatterplot.pdf',bbox_inches='tight')
 # -1.75371675 -2.42340284
 # %%
